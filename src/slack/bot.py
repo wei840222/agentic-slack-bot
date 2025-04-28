@@ -31,7 +31,7 @@ class SlackEventType(Enum):
 class SlackEvent(BaseModel):
     type: SlackEventType
     data: Dict[str, Any]
-    message_id: str
+    message_id: Optional[str] = None
     session_id: Optional[str] = None
 
 
@@ -68,6 +68,7 @@ class SlackBot:
         if not self.config.assistant:
             self.app.event("message")(self._handle_message)
         self.app.event("app_mention")(self._handle_app_mention)
+        self.app.event("reaction_added")(self._handle_reaction_added)
 
     async def run(self) -> None:
         await self.handler.start_async()
@@ -111,7 +112,7 @@ class SlackBot:
 
     async def _error_handler(self, body: Dict[str, Any]) -> None:
         self.logger.exception("catched exception",
-                              body=json.dumps(body, ensure_ascii=False))
+                              slack_body=json.dumps(body, ensure_ascii=False))
 
     async def _handle_thread_started(self, say: AsyncSay, set_suggested_prompts: AsyncSetSuggestedPrompts):
         await say(self.config.i18n.assistant.greeting_message)
@@ -150,7 +151,7 @@ class SlackBot:
     async def _handle_reaction_added(self, body: Dict[str, Any], ack: AsyncAck) -> None:
         self.logger.info("got slack reaction_added event",
                          slack_body=json.dumps(body, ensure_ascii=False))
-        await self.event_queue.put(SlackEvent(type=SlackEventType.REACTION_ADDED, data=body["event"], message_id=body["event"]["client_msg_id"]))
+        await self.event_queue.put(SlackEvent(type=SlackEventType.REACTION_ADDED, data=body["event"]))
         await ack()
 
     async def _process_message_event(self, event: SlackEvent) -> None:
@@ -221,8 +222,8 @@ class SlackBot:
             metadata={
                 "event_type": f"reply_{event.type.value}",
                 "event_payload": {
-                    "reply_message_id": event.message_id,
-                    "reply_session_id": event.session_id or event.message_id,
+                    "reply_message_id": event.message_id or event.data["client_msg_id"],
+                    "reply_session_id": event.session_id or event.message_id or event.data["client_msg_id"],
                 }
             }
         )
