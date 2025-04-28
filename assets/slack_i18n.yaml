@@ -1,0 +1,10 @@
+loading_emoji: ":loading:"
+content_disclaimer_message: ":thinking_face: AI 可能會發生錯誤，請查核重要資訊。"
+assistant:
+  thinking_message: "正在思考..."
+  greeting_message: "今天過的好嗎?"
+  greeting_prompts:
+    - title: 幫我算數學
+      message: 1+1=?
+    - title: 寫一隻程式
+      message: 幫我用 Python 寫一個插入排序法。

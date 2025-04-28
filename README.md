@@ -1,1 +1,1 @@
-# agentic-bot
+# agentic-slack-bot
