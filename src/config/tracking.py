@@ -12,13 +12,13 @@ class LangfuseConfig(BaseSettings):
         extra="ignore",
     )
 
-    url: Optional[str] = None
+    url: str = "https://cloud.langfuse.com"
     skip_ssl_verify: bool = False
-    public_key: str = ""
-    secret_key: str = ""
-    environment: str = ""
-    release: str = ""
-    version: str = ""
+    public_key: Optional[str] = None
+    secret_key: Optional[str] = None
+    environment: str = "local"
+    release: str = "nightly"
+    version: str = "0.0.0"
 
 
 class TrackingConfig(BaseSettings):

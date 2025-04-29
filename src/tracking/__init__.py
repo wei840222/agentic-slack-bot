@@ -8,7 +8,7 @@ from .langfuse_tracker import LangfuseTracker
 
 def create_tracker(config: TrackingConfig) -> Optional[BaseTracker]:
     if config.enabled:
-        if config.langfuse.url is not None:
+        if config.langfuse.public_key is not None and config.langfuse.secret_key is not None:
             return LangfuseTracker(config.langfuse)
         else:
             return StdoutTracker()
