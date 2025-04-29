@@ -11,8 +11,13 @@ from config import LangfuseConfig
 from .base import BaseTracker
 
 
-class LangfuseDataset(Enum):
+class LangfuseScore(Enum):
     EMOJI_FEEDBACK = "emoji_feedback"
+
+
+class LangfuseDataset(Enum):
+    EMOJI_FEEDBACK_POSITIVE = "emoji_feedback_positive"
+    EMOJI_FEEDBACK_NEGATIVE = "emoji_feedback_negative"
     EMOJI_UNSCORED = "emoji_unscored"
 
 
@@ -32,8 +37,12 @@ class LangfuseTracker(BaseTracker):
         )
         assert self.langfuse.auth_check()
         self.langfuse.create_dataset(
-            name=LangfuseDataset.EMOJI_FEEDBACK.value,
-            description="Emoji feedback records",
+            name=LangfuseDataset.EMOJI_FEEDBACK_POSITIVE.value,
+            description="Emoji feedback positive records",
+        )
+        self.langfuse.create_dataset(
+            name=LangfuseDataset.EMOJI_FEEDBACK_NEGATIVE.value,
+            description="Emoji feedback negative records",
         )
         self.langfuse.create_dataset(
             name=LangfuseDataset.EMOJI_UNSCORED.value,
@@ -74,7 +83,7 @@ class LangfuseTracker(BaseTracker):
 
         self.langfuse.score(
             id=f"{message_id}:{user_id}:{emoji_name}",
-            name=LangfuseDataset.EMOJI_FEEDBACK.value,
+            name=LangfuseScore.EMOJI_FEEDBACK.value,
             data_type="NUMERIC",
             value=emoji.score,
             trace_id=message_id
@@ -84,13 +93,12 @@ class LangfuseTracker(BaseTracker):
                          message_id=message_id, user_id=user_id, message=message, reply_message=reply_message, emoji=emoji)
 
         self.langfuse.create_dataset_item(
-            dataset_name=LangfuseDataset.EMOJI_FEEDBACK.value,
+            dataset_name=LangfuseDataset.EMOJI_FEEDBACK_POSITIVE.value if emoji.score >= 0 else LangfuseDataset.EMOJI_FEEDBACK_NEGATIVE.value,
             id=f"{message_id}:{user_id}:{emoji_name}",
             input=message,
             expected_output=reply_message,
             source_trace_id=message_id,
-            metadata={"emoji": emoji.model_dump(
-            ), "feedback": "positive" if emoji.score >= 0 else "negative"},
+            metadata={"emoji": emoji.model_dump()},
             status=DatasetStatus.ACTIVE,
         )
 
