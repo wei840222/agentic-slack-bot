@@ -10,7 +10,7 @@ from slack_bolt.context.set_suggested_prompts.async_set_suggested_prompts import
 from slack_bolt.context.set_status.async_set_status import AsyncSetStatus
 from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
-
+from langchain_core.runnables import RunnableConfig
 from .client import SlackEvent, SlackEventType, SlackAsyncClient, SlackMessageReference, SlackMessageReferenceArtifact
 from config import Config
 from agent import create_agent
@@ -81,6 +81,8 @@ class SlackBot:
         await self.event_queue.put(None)
         self.logger.info("worker received sentinel and exiting")
         await self.event_queue.join()
+        if self.tracker is not None:
+            self.tracker.flush()
 
     async def _error_handler(self, body: Dict[str, Any]) -> None:
         self.logger.exception("catched exception",
@@ -94,8 +96,8 @@ class SlackBot:
         self.logger.info("got slack assistant message event",
                          slack_body=json.dumps(body, ensure_ascii=False))
         if "subtype" not in body["event"] and body["event"]["text"].strip() != "":
-            event = SlackEvent(type=SlackEventType.MESSAGE,
-                               data=body["event"], message_id=body["event"]["client_msg_id"])
+            event = SlackEvent(type=SlackEventType.MESSAGE, data=body["event"], user=body["event"]
+                               ["user"], channel=body["event"]["channel"], message_id=body["event"]["client_msg_id"])
             await self.event_queue.put(event)
             await set_status(self.config.resources.assistant.thinking_message)
         await ack()
@@ -104,8 +106,8 @@ class SlackBot:
         self.logger.info("got slack message event",
                          slack_body=json.dumps(body, ensure_ascii=False))
         if "subtype" not in body["event"] and body["event"]["text"].strip() != "":
-            event = SlackEvent(type=SlackEventType.MESSAGE,
-                               data=body["event"], message_id=body["event"]["client_msg_id"])
+            event = SlackEvent(type=SlackEventType.MESSAGE, data=body["event"], user=body["event"]
+                               ["user"], channel=body["event"]["channel"], message_id=body["event"]["client_msg_id"])
             await self.event_queue.put(event)
             await self.client.add_reaction(event, self.config.resources.emoji["loading"])
         await ack()
@@ -114,8 +116,8 @@ class SlackBot:
         self.logger.info("got slack app_mention event",
                          slack_body=json.dumps(body, ensure_ascii=False))
         if "edited" not in body["event"]:
-            event = SlackEvent(type=SlackEventType.APP_MENTION,
-                               data=body["event"], message_id=body["event"]["client_msg_id"])
+            event = SlackEvent(type=SlackEventType.APP_MENTION, data=body["event"], user=body["event"]
+                               ["user"], channel=body["event"]["channel"], message_id=body["event"]["client_msg_id"])
             await self.event_queue.put(event)
             await self.client.add_reaction(event, self.config.resources.emoji["loading"])
         await ack()
@@ -123,56 +125,50 @@ class SlackBot:
     async def _handle_reaction_added(self, body: Dict[str, Any], ack: AsyncAck) -> None:
         self.logger.info("got slack reaction_added event",
                          slack_body=json.dumps(body, ensure_ascii=False))
-        await self.event_queue.put(SlackEvent(type=SlackEventType.REACTION_ADDED, data=body["event"]))
+        await self.event_queue.put(SlackEvent(type=SlackEventType.REACTION_ADDED, data=body["event"], user=body["event"]["user"], channel=body["event"]["item"]["channel"]))
         await ack()
 
     async def _process_message_event(self, event: SlackEvent) -> None:
         event.session_id = await self.client.find_session_id(
             event, in_replies=self.config.assistant)
 
-        result = await self.agent.ainvoke(
+        runnable_config = self.create_runnable_config(event)
+        if self.tracker is not None:
+            runnable_config = self.tracker.inject_runnable_config(
+                runnable_config)
+
+        agent_result = await self.agent.ainvoke(
             input={
                 "messages": [HumanMessage(content=event.data["text"])]
             },
-            config={
-                "metadata": {
-                    "user_id": event.data["user"],
-                    "message_id": event.message_id,
-                    "session_id": event.session_id,
-                },
-                "configurable": {
-                    "thread_id": event.session_id,
-                },
-            })
-        self.logger.debug("agent_result", agent_result=result)
+            config=runnable_config,
+        )
+        self.logger.debug("agent_result", agent_result=agent_result)
 
         if not self.config.assistant:
             await self.client.remove_reaction(event, self.config.resources.emoji["loading"])
 
-        content, references = self.parse_agent_result(result)
+        content, references = self.parse_agent_result(agent_result)
         await self.client.reply_markdown(event, content, references, in_replies=self.config.assistant)
 
     async def _process_app_mention_event(self, event: SlackEvent) -> None:
         event.session_id = await self.client.find_session_id(
             event, in_replies=True)
 
-        result = await self.agent.ainvoke(
+        runnable_config = self.create_runnable_config(event)
+        if self.tracker is not None:
+            runnable_config = self.tracker.inject_runnable_config(
+                runnable_config)
+
+        agent_result = await self.agent.ainvoke(
             input={
                 "messages": [HumanMessage(content=event.data["text"])]
             },
-            config={
-                "metadata": {
-                    "user_id": event.data["user"],
-                    "message_id": event.message_id,
-                    "session_id": event.session_id,
-                },
-                "configurable": {
-                    "thread_id": event.session_id,
-                },
-            })
-        self.logger.debug("agent_result", agent_result=result)
+            config=runnable_config,
+        )
+        self.logger.debug("agent_result", agent_result=agent_result)
 
-        content, references = self.parse_agent_result(result)
+        content, references = self.parse_agent_result(agent_result)
         await self.client.remove_reaction(event, self.config.resources.emoji["loading"])
         await self.client.reply_markdown(event, content, references, in_replies=True)
 
@@ -180,19 +176,34 @@ class SlackBot:
         if self.tracker is None:
             return
 
-        replies = await self.client.fetch_conversations_replies(event.data["item"]["channel"], event.data["item"]["ts"])
+        replies = await self.client.fetch_conversations_replies(event.channel, event.data["item"]["ts"])
         for reply in replies:
             if reply["ts"] == event.data["item"]["ts"]:
                 try:
                     self.logger.debug("found reply", reply=json.dumps(
                         reply, ensure_ascii=False))
                     for reaction in reply.get("reactions", []):
-                        self.tracker.collect_emoji_feedback(
-                            reply["metadata"]["event_payload"]["reply_message_id"], reply["metadata"]["event_payload"]["reply_message"], reply["text"], reaction["name"])
+                        for user_id in reaction["users"]:
+                            self.tracker.collect_emoji_feedback(
+                                reply["metadata"]["event_payload"]["reply_message_id"], user_id, reply["metadata"]["event_payload"]["reply_message"], reply["text"], reaction["name"])
                 except KeyError:
                     self.logger.warning("no message_id or message found in reply",
                                         reply=json.dumps(reply, ensure_ascii=False))
                 break
+
+    def create_runnable_config(self, event: SlackEvent) -> RunnableConfig:
+        return RunnableConfig(
+            metadata={
+                "user_id": event.user,
+                "message_id": event.message_id,
+                "session_id": event.session_id,
+            },
+            configurable={
+                "thread_id": event.session_id,
+            },
+            tags=["slack", event.type.value],
+            run_id=event.message_id,
+        )
 
     def parse_agent_result(self, result: Dict[str, Any]) -> Tuple[str, List[SlackMessageReference]]:
         content: str | list[str | dict] = result["messages"][-1].content

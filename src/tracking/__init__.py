@@ -2,12 +2,16 @@ from typing import Optional
 
 from config import TrackingConfig
 from .base import BaseTracker
-from .stdout import StdoutTracker
+from .stdout_tracker import StdoutTracker
+from .langfuse_tracker import LangfuseTracker
 
 
 def create_tracker(config: TrackingConfig) -> Optional[BaseTracker]:
     if config.enabled:
-        return StdoutTracker()
+        if config.langfuse.url is not None:
+            return LangfuseTracker(config.langfuse)
+        else:
+            return StdoutTracker()
     else:
         return None
 

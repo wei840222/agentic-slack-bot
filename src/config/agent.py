@@ -9,6 +9,7 @@ from langchain_core.runnables import RunnableConfig, ensure_config
 class Prompt(YamlBaseSettings):
     model_config = SettingsConfigDict(
         yaml_file="./assets/agent_prompt.yaml",
+        secrets_dir="./assets",
         extra="ignore",
     )
 

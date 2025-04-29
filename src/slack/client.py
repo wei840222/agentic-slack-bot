@@ -47,6 +47,8 @@ class SlackEventType(Enum):
 class SlackEvent(BaseModel):
     type: SlackEventType
     data: Dict[str, Any]
+    user: str
+    channel: str
     message_id: Optional[str] = None
     session_id: Optional[str] = None
 
@@ -184,7 +186,7 @@ class SlackClient(BaseSlackClient):
 
         if in_replies and "thread_ts" in event.data:
             replies = self.fetch_conversations_replies(
-                event.data["channel"], event.data["thread_ts"], 30)
+                event.channel, event.data["thread_ts"], 30)
             if len(replies) > 0:
                 for reply in replies:
                     if "client_msg_id" in reply:
@@ -193,7 +195,7 @@ class SlackClient(BaseSlackClient):
 
         else:
             conversations = self.fetch_conversations_history(
-                event.data["channel"], 1, size=30)
+                event.channel, 1, size=30)
             for message in conversations["pages"][0]["messages"]:
                 if "subtype" in message or message["text"].strip() == "":
                     continue
@@ -214,7 +216,7 @@ class SlackClient(BaseSlackClient):
 
     def add_reaction(self, event: SlackEvent, reaction: str) -> None:
         response = self.client.reactions_add(
-            channel=event.data["channel"],
+            channel=event.channel,
             timestamp=event.data["ts"],
             name=reaction.strip(":"),
         )
@@ -223,7 +225,7 @@ class SlackClient(BaseSlackClient):
 
     def remove_reaction(self, event: SlackEvent, reaction: str) -> None:
         response = self.client.reactions_remove(
-            channel=event.data["channel"],
+            channel=event.channel,
             timestamp=event.data["ts"],
             name=reaction.strip(":"),
         )
@@ -257,7 +259,7 @@ class SlackClient(BaseSlackClient):
         })
 
         response = self.client.chat_postMessage(
-            channel=event.data["channel"],
+            channel=event.channel,
             thread_ts=event.data["ts"] if in_replies else None,
             text=self.clean_markdown(markdown),
             blocks=blocks,
@@ -359,7 +361,7 @@ class SlackAsyncClient(BaseSlackClient):
 
         if in_replies and "thread_ts" in event.data:
             replies = await self.fetch_conversations_replies(
-                event.data["channel"], event.data["thread_ts"], 30)
+                event.channel, event.data["thread_ts"], 30)
             if len(replies) > 0:
                 for reply in replies:
                     if "client_msg_id" in reply:
@@ -368,7 +370,7 @@ class SlackAsyncClient(BaseSlackClient):
 
         else:
             conversations = await self.fetch_conversations_history(
-                event.data["channel"], 1, size=30)
+                event.channel, 1, size=30)
             for message in conversations["pages"][0]["messages"]:
                 if "subtype" in message or message["text"].strip() == "":
                     continue
@@ -389,7 +391,7 @@ class SlackAsyncClient(BaseSlackClient):
 
     async def add_reaction(self, event: SlackEvent, reaction: str) -> None:
         response = await self.client.reactions_add(
-            channel=event.data["channel"],
+            channel=event.channel,
             timestamp=event.data["ts"],
             name=reaction.strip(":"),
         )
@@ -398,7 +400,7 @@ class SlackAsyncClient(BaseSlackClient):
 
     async def remove_reaction(self, event: SlackEvent, reaction: str) -> None:
         response = await self.client.reactions_remove(
-            channel=event.data["channel"],
+            channel=event.channel,
             timestamp=event.data["ts"],
             name=reaction.strip(":"),
         )
@@ -432,7 +434,7 @@ class SlackAsyncClient(BaseSlackClient):
         })
 
         response = await self.client.chat_postMessage(
-            channel=event.data["channel"],
+            channel=event.channel,
             thread_ts=event.data["ts"] if in_replies else None,
             text=self.clean_markdown(markdown),
             blocks=blocks,

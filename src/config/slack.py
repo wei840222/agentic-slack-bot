@@ -13,6 +13,7 @@ class SlackBotAssistantResources(BaseSettings):
 class SlackBotResources(YamlBaseSettings):
     model_config = SettingsConfigDict(
         yaml_file="./assets/slack_bot_resources.yaml",
+        secrets_dir="./assets",
         extra="ignore",
     )
 
