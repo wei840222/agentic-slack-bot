@@ -20,6 +20,7 @@ class SlackBotResources(YamlBaseSettings):
     emoji: Dict[str, str]
     artifact_icon_emoji: Dict[str, str]
     content_disclaimer_message: str
+    new_conversation_message: str
     tool_reference_message: str
     assistant: SlackBotAssistantResources
 

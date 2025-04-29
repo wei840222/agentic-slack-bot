@@ -276,6 +276,26 @@ class SlackClient(BaseSlackClient):
         self.logger.debug("slack.client.chat_postMessage", blocks=blocks,
                           slack_response=json.dumps(response.data, ensure_ascii=False))
 
+    def reply_blocks(self, event: SlackEvent, text: str, blocks: List[Dict[str, Any]], in_replies: bool = False) -> None:
+        response = self.client.chat_postMessage(
+            channel=event.channel,
+            thread_ts=event.data["ts"] if in_replies else None,
+            text=text,
+            blocks=blocks,
+            unfurl_links=False,
+            unfurl_media=False,
+            metadata={
+                "event_type": f"reply_{event.type.value}",
+                "event_payload": {
+                    "reply_message_id": event.message_id or event.data["client_msg_id"],
+                    "reply_session_id": event.session_id or event.message_id or event.data["client_msg_id"],
+                }
+            }
+        )
+
+        self.logger.debug("slack.client.chat_postMessage", blocks=blocks,
+                          slack_response=json.dumps(response.data, ensure_ascii=False))
+
 
 class SlackAsyncClient(BaseSlackClient):
     def __init__(self, config: SlackConfig, client: Optional[AsyncWebClient] = None, logger: Optional[logging.Logger] = None):
@@ -450,4 +470,24 @@ class SlackAsyncClient(BaseSlackClient):
             }
         )
         self.logger.debug("slack.async_client.chat_postMessage", blocks=blocks,
+                          slack_response=json.dumps(response.data, ensure_ascii=False))
+
+    async def reply_blocks(self, event: SlackEvent, text: str, blocks: List[Dict[str, Any]], in_replies: bool = False) -> None:
+        response = await self.client.chat_postMessage(
+            channel=event.channel,
+            thread_ts=event.data["ts"] if in_replies else None,
+            text=text,
+            blocks=blocks,
+            unfurl_links=False,
+            unfurl_media=False,
+            metadata={
+                "event_type": f"reply_{event.type.value}",
+                "event_payload": {
+                    "reply_message_id": event.message_id or event.data["client_msg_id"],
+                    "reply_session_id": event.session_id or event.message_id or event.data["client_msg_id"],
+                }
+            }
+        )
+
+        self.logger.debug("slack.client.chat_postMessage", blocks=blocks,
                           slack_response=json.dumps(response.data, ensure_ascii=False))

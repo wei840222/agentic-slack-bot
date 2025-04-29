@@ -14,3 +14,36 @@ tool:
 
     Args:
         query: The search query.
+
+chain:
+  check_new_conversation: |
+    Classify the following input means to start a new conversation.
+    Except for the following examples, the default classification is `no`.
+    Please answer in `yes` or `no`.
+
+    Input: Start a new chat
+    Answer: yes
+
+    Input: thx
+    Answer: no
+
+    Input: I understood.
+    Answer: no
+
+    Input: I want to ask other question.
+    Answer: no
+
+    Input: Nothing else.
+    Answer: no
+
+    Input: Goodbye.
+    Answer: yes
+
+    Input: I want to ask a new question.
+    Answer: yes
+
+    Input: End chat.
+    Answer: yes
+
+    Input: {input}
+    Answer:

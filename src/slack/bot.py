@@ -13,7 +13,7 @@ from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from .client import SlackEvent, SlackEventType, SlackAsyncClient, SlackMessageReference, SlackMessageReferenceArtifact
 from config import Config
-from agent import create_agent
+from agent import create_agent, create_check_new_conversation_chain
 from tracking import create_tracker
 from common import get_logger
 
@@ -22,9 +22,9 @@ class SlackBot:
     def __init__(self, config: Config, logger: Optional[logging.Logger] = None):
         self.logger = logger or get_logger()
         self.config = config.slack
+        self.agent_config = config.agent
         self.app = AsyncApp(token=self.config.bot_token)
         self.client = SlackAsyncClient(self.config, self.app.client, logger)
-        self.agent = create_agent(config.agent)
         self.handler = AsyncSocketModeHandler(self.app, self.config.app_token)
         self.event_queue = asyncio.Queue()
         self.tracker = create_tracker(config.tracking)
@@ -137,7 +137,32 @@ class SlackBot:
             runnable_config = self.tracker.inject_runnable_config(
                 runnable_config)
 
-        agent_result = await self.agent.ainvoke(
+        if not self.config.assistant:
+            chain = create_check_new_conversation_chain(
+                self.agent_config)
+            is_new_conversation = await chain.ainvoke(
+                input={"input": event.data["text"]},
+                config=runnable_config,
+            )
+            if is_new_conversation.strip().lower() == "yes":
+                await self.client.remove_reaction(event, self.config.resources.emoji["loading"])
+                event.session_id = None
+                await self.client.reply_blocks(event, self.config.resources.new_conversation_message, [
+                    {
+                        "type": "context",
+                        "elements": [
+                            {
+                                "type": "plain_text",
+                                "text": f"💡 {self.config.resources.new_conversation_message}",
+                                "emoji": True
+                            }
+                        ]
+                    },
+                ])
+                return
+
+        agent = create_agent(self.agent_config)
+        agent_result = await agent.ainvoke(
             input={
                 "messages": [HumanMessage(content=event.data["text"])]
             },
@@ -160,7 +185,8 @@ class SlackBot:
             runnable_config = self.tracker.inject_runnable_config(
                 runnable_config)
 
-        agent_result = await self.agent.ainvoke(
+        agent = create_agent(self.agent_config)
+        agent_result = await agent.ainvoke(
             input={
                 "messages": [HumanMessage(content=event.data["text"])]
             },

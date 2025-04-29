@@ -19,6 +19,7 @@ class Prompt(YamlBaseSettings):
         "This prompt sets the context and behavior for the agent."
     )
     tool: Dict[str, str]
+    chain: Dict[str, str]
 
 
 class AgentConfig(BaseSettings):

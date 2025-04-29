@@ -3,6 +3,7 @@ emoji:
 artifact_icon_emoji:
   google_search: ":google:"
 content_disclaimer_message: ":thinking_face: AI 可能會發生錯誤，請查核重要資訊。"
+new_conversation_message: "開啟新的對話"
 tool_reference_message: "參考資料"
 assistant:
   thinking_message: "正在思考..."
