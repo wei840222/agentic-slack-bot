@@ -441,6 +441,7 @@ class SlackAsyncClient(BaseSlackClient):
             metadata={
                 "event_type": f"reply_{event.type.value}",
                 "event_payload": {
+                    "reply_message": event.data.get("text", ""),
                     "reply_message_id": event.message_id or event.data["client_msg_id"],
                     "reply_session_id": event.session_id or event.message_id or event.data["client_msg_id"],
                 }

@@ -4,7 +4,7 @@ import asyncio
 from common import get_logger
 from config import Config
 from slack import SlackBot
-from agent import create_agent
+
 
 logger = get_logger()
 
@@ -20,15 +20,12 @@ async def main() -> None:
     config = Config()
     logger.debug("config loaded", config=config)
 
-    agent = create_agent(config.agent)
-    logger.debug("agent created", agent=agent.get_config_jsonschema())
-
     loop = asyncio.get_running_loop()
     task_to_cancel = {asyncio.current_task()}
     for sig in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(sig, graceful_shutdown, sig, task_to_cancel)
 
-    async with SlackBot(config.slack, agent, logger) as bot:
+    async with SlackBot(config, logger) as bot:
         try:
             await bot.run()
         except asyncio.exceptions.CancelledError:

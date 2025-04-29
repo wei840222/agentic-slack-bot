@@ -9,26 +9,25 @@ from slack_bolt.context.say.async_say import AsyncSay
 from slack_bolt.context.set_suggested_prompts.async_set_suggested_prompts import AsyncSetSuggestedPrompts
 from slack_bolt.context.set_status.async_set_status import AsyncSetStatus
 from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
-from emoji_sentiment import EmojiSentiment
-from langchain_core.runnables import Runnable
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 
 from .client import SlackEvent, SlackEventType, SlackAsyncClient, SlackMessageReference, SlackMessageReferenceArtifact
-from config import SlackConfig
+from config import Config
+from agent import create_agent
+from tracking import create_tracker
 from common import get_logger
 
 
 class SlackBot:
-    emoji_sentiment = EmojiSentiment(round_to=4)
-
-    def __init__(self, config: SlackConfig, agent: Runnable, logger: Optional[logging.Logger] = None):
+    def __init__(self, config: Config, logger: Optional[logging.Logger] = None):
         self.logger = logger or get_logger()
-        self.config = config
-        self.app = AsyncApp(token=config.bot_token)
-        self.client = SlackAsyncClient(config, self.app.client, logger)
-        self.agent = agent
-        self.handler = AsyncSocketModeHandler(self.app, config.app_token)
+        self.config = config.slack
+        self.app = AsyncApp(token=self.config.bot_token)
+        self.client = SlackAsyncClient(self.config, self.app.client, logger)
+        self.agent = create_agent(config.agent)
+        self.handler = AsyncSocketModeHandler(self.app, self.config.app_token)
         self.event_queue = asyncio.Queue()
+        self.tracker = create_tracker(config.tracking)
 
         if self.config.assistant:
             self.assistant = AsyncAssistant()
@@ -178,7 +177,22 @@ class SlackBot:
         await self.client.reply_markdown(event, content, references, in_replies=True)
 
     async def _process_reaction_added_event(self, event: SlackEvent) -> None:
-        pass
+        if self.tracker is None:
+            return
+
+        replies = await self.client.fetch_conversations_replies(event.data["item"]["channel"], event.data["item"]["ts"])
+        for reply in replies:
+            if reply["ts"] == event.data["item"]["ts"]:
+                try:
+                    self.logger.debug("found reply", reply=json.dumps(
+                        reply, ensure_ascii=False))
+                    for reaction in reply.get("reactions", []):
+                        self.tracker.collect_emoji_feedback(
+                            reply["metadata"]["event_payload"]["reply_message_id"], reply["metadata"]["event_payload"]["reply_message"], reply["text"], reaction["name"])
+                except KeyError:
+                    self.logger.warning("no message_id or message found in reply",
+                                        reply=json.dumps(reply, ensure_ascii=False))
+                break
 
     def parse_agent_result(self, result: Dict[str, Any]) -> Tuple[str, List[SlackMessageReference]]:
         content: str | list[str | dict] = result["messages"][-1].content
