@@ -8,7 +8,7 @@ from langchain_core.runnables import RunnableConfig, ensure_config
 
 class Prompt(YamlBaseSettings):
     model_config = SettingsConfigDict(
-        yaml_file="./assets/prompt.yaml",
+        yaml_file="./assets/agent_prompt.yaml",
         extra="ignore",
     )
 

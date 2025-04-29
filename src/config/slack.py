@@ -4,21 +4,23 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic_settings_yaml import YamlBaseSettings
 
 
-class SlackAssistantI18N(BaseSettings):
+class SlackBotAssistantResources(BaseSettings):
     thinking_message: str
     greeting_message: str
     greeting_prompts: List[Dict[str, str]]
 
 
-class SlackI18N(YamlBaseSettings):
+class SlackBotResources(YamlBaseSettings):
     model_config = SettingsConfigDict(
-        yaml_file="./assets/slack_i18n.yaml",
+        yaml_file="./assets/slack_bot_resources.yaml",
         extra="ignore",
     )
 
-    loading_emoji: str
+    emoji: Dict[str, str]
+    artifact_icon_emoji: Dict[str, str]
     content_disclaimer_message: str
-    assistant: SlackAssistantI18N
+    tool_reference_message: str
+    assistant: SlackBotAssistantResources
 
 
 class SlackConfig(BaseSettings):
@@ -34,4 +36,4 @@ class SlackConfig(BaseSettings):
     bot_id: str
     assistant: bool = False
 
-    i18n: SlackI18N = Field(default_factory=SlackI18N)
+    resources: SlackBotResources = Field(default_factory=SlackBotResources)
