@@ -13,6 +13,8 @@ from slack_bolt.context.set_suggested_prompts.async_set_suggested_prompts import
 from slack_bolt.context.set_status.async_set_status import AsyncSetStatus
 from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 from emoji_sentiment import EmojiSentiment
+from langchain_core.runnables import Runnable
+from langchain_core.messages import HumanMessage
 
 from config import Config, SlackConfig
 from common import get_logger
@@ -50,9 +52,10 @@ class Reference(BaseModel):
 class SlackBot:
     emoji_sentiment = EmojiSentiment(round_to=4)
 
-    def __init__(self, config: SlackConfig, logger: Optional[logging.Logger] = None):
+    def __init__(self, config: SlackConfig, agent: Runnable, logger: Optional[logging.Logger] = None):
         self.logger = logger or get_logger()
         self.config = config
+        self.agent = agent
         self.app = AsyncApp(token=config.bot_token)
         self.handler = AsyncSocketModeHandler(self.app, config.app_token)
         self.event_queue = asyncio.Queue()
@@ -155,10 +158,26 @@ class SlackBot:
         await ack()
 
     async def _process_message_event(self, event: SlackEvent) -> None:
-        await asyncio.sleep(1)
+        result = await self.agent.ainvoke(
+            input={
+                "messages": [HumanMessage(content=event.data["text"])]
+            },
+            config={
+                "metadata": {
+                    "user_id": event.data["user"],
+                    "message_id": event.message_id or event.data["client_msg_id"],
+                    "session_id": event.session_id or event.data["channel"],
+                },
+                "configurable": {
+                    "thread_id": event.session_id or event.data["channel"],
+                },
+            })
+        self.logger.debug("agent_result", agent_result=result)
+
         if not self.config.assistant:
             await self.remove_reaction(event, self.config.i18n.loading_emoji)
-        await self.reply_markdown(event, event.data["text"], reply_in_thread=self.config.assistant)
+
+        await self.reply_markdown(event, result["messages"][-1].content, reply_in_thread=self.config.assistant)
 
     async def _process_app_mention_event(self, event: SlackEvent) -> None:
         await asyncio.sleep(1)

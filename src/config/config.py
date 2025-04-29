@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .logger import LoggerConfig
 from .slack import SlackConfig
+from .agent import AgentConfig
 
 
 class Config(BaseSettings):
@@ -14,3 +15,4 @@ class Config(BaseSettings):
 
     logger: LoggerConfig = Field(default_factory=LoggerConfig)
     slack: SlackConfig = Field(default_factory=SlackConfig)
+    agent: AgentConfig = Field(default_factory=AgentConfig)
