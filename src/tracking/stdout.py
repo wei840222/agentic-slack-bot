@@ -1,13 +1,13 @@
 from langchain_core.callbacks import StdOutCallbackHandler
 from langchain_core.runnables import RunnableConfig
 
-from common import get_logger
+from config.logger import LoggerConfig
 from .base import BaseTracker
 
 
 class StdoutTracker(BaseTracker):
     def __init__(self):
-        self.logger = get_logger()
+        self.logger = LoggerConfig().get_logger()
 
     def inject_runnable_config(self, config: RunnableConfig) -> RunnableConfig:
         config = super().inject_runnable_config(config)

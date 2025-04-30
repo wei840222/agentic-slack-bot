@@ -1,12 +1,12 @@
 import signal
 import asyncio
 
-from common import get_logger
-from config import Config
+from config import BaseConfig
 from slack import SlackBot
 
-
-logger = get_logger()
+config = BaseConfig()
+logger = config.logger.get_logger()
+logger.debug("config loaded", config=config)
 
 
 def graceful_shutdown(sig: signal.Signals, task_to_cancel: set[asyncio.Task]) -> None:
@@ -17,9 +17,6 @@ def graceful_shutdown(sig: signal.Signals, task_to_cancel: set[asyncio.Task]) ->
 
 
 async def main() -> None:
-    config = Config()
-    logger.debug("config loaded", config=config)
-
     loop = asyncio.get_running_loop()
     task_to_cancel = {asyncio.current_task()}
     for sig in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT):

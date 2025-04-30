@@ -1,9 +1,14 @@
+
+from enum import Enum
 from typing import Dict, Annotated, Optional
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic_settings_yaml import YamlBaseSettings
-
 from langchain_core.runnables import RunnableConfig, ensure_config
+
+from tracking import BaseTracker, LangfuseTracker, StdoutTracker
+from .client import LangfuseConfig
 
 
 class Prompt(YamlBaseSettings):
@@ -22,6 +27,12 @@ class Prompt(YamlBaseSettings):
     chain: Dict[str, str]
 
 
+class TrackingProvider(Enum):
+    LANGFUSE = "langfuse"
+    STDOUT = "stdout"
+    NONE = "none"
+
+
 class AgentConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="AGENT_",
@@ -31,6 +42,11 @@ class AgentConfig(BaseSettings):
     )
 
     prompt: Prompt = Field(default_factory=Prompt)
+
+    tracking_provider: TrackingProvider = Field(
+        default=TrackingProvider.NONE,
+        description="The provider to use for tracking the agent's interactions."
+    )
 
     model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = Field(
         default="google_genai/gemini-2.0-flash",
@@ -53,3 +69,15 @@ class AgentConfig(BaseSettings):
         config = ensure_config(config)
         configurable = config.get("configurable") or {}
         return cls(**{k: v for k, v in configurable.items() if k in cls.model_fields})
+
+    def create_tracker(self) -> Optional[BaseTracker]:
+        match self.tracking_provider:
+            case TrackingProvider.LANGFUSE:
+                return LangfuseTracker(LangfuseConfig())
+            case TrackingProvider.STDOUT:
+                return StdoutTracker()
+            case TrackingProvider.NONE:
+                return None
+
+        raise ValueError(
+            f"Invalid tracking provider: {self.tracking_provider}")

@@ -1,13 +1,9 @@
-import httpx
-
 from enum import Enum
 from langchain_core.runnables import RunnableConfig
-from langfuse import Langfuse
 from langfuse.client import DatasetStatus
-from langfuse.callback import CallbackHandler
 
-from common import get_logger
-from config import LangfuseConfig
+from config.logger import LoggerConfig
+from config.client import LangfuseConfig
 from .base import BaseTracker
 
 
@@ -23,19 +19,10 @@ class LangfuseDataset(Enum):
 
 class LangfuseTracker(BaseTracker):
     def __init__(self, config: LangfuseConfig):
-        self.logger = get_logger()
+        self.logger = LoggerConfig().get_logger()
+        self.langfuse = config.get_langfuse_client()
+        self.langfuse_callback_handler = config.get_langfuse_callback_handler()
 
-        httpx_client = httpx.Client(verify=not config.skip_ssl_verify)
-
-        self.langfuse = Langfuse(
-            host=config.url,
-            public_key=config.public_key,
-            secret_key=config.secret_key,
-            environment=config.environment,
-            release=config.release,
-            httpx_client=httpx_client,
-        )
-        assert self.langfuse.auth_check()
         self.langfuse.create_dataset(
             name=LangfuseDataset.EMOJI_FEEDBACK_POSITIVE.value,
             description="Emoji feedback positive records",
@@ -48,17 +35,6 @@ class LangfuseTracker(BaseTracker):
             name=LangfuseDataset.EMOJI_UNSCORED.value,
             description="Emoji unscored records",
         )
-
-        self.langfuse_callback_handler = CallbackHandler(
-            host=config.url,
-            public_key=config.public_key,
-            secret_key=config.secret_key,
-            environment=config.environment,
-            release=config.release,
-            version=config.version,
-            httpx_client=httpx_client,
-        )
-        assert self.langfuse_callback_handler.auth_check()
 
     def inject_runnable_config(self, config: RunnableConfig) -> RunnableConfig:
         config = super().inject_runnable_config(config)

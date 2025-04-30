@@ -12,22 +12,20 @@ from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from .client import SlackEvent, SlackEventType, SlackAsyncClient, SlackMessageReference, SlackMessageReferenceArtifact
-from config import Config
+from config import BaseConfig
 from agent import create_agent, create_check_new_conversation_chain
-from tracking import create_tracker
-from common import get_logger
 
 
 class SlackBot:
-    def __init__(self, config: Config, logger: Optional[logging.Logger] = None):
-        self.logger = logger or get_logger()
+    def __init__(self, config: BaseConfig, logger: Optional[logging.Logger] = None):
+        self.logger = logger or config.logger.get_logger()
         self.config = config.slack
         self.agent_config = config.agent
         self.app = AsyncApp(token=self.config.bot_token)
         self.client = SlackAsyncClient(self.config, self.app.client, logger)
         self.handler = AsyncSocketModeHandler(self.app, self.config.app_token)
         self.event_queue = asyncio.Queue()
-        self.tracker = create_tracker(config.tracking)
+        self.tracker = self.agent_config.create_tracker()
 
         if self.config.assistant:
             self.assistant = AsyncAssistant()
