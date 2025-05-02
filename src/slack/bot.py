@@ -87,8 +87,12 @@ class SlackBot:
                               slack_body=json.dumps(body, ensure_ascii=False))
 
     async def _handle_thread_started(self, say: AsyncSay, set_suggested_prompts: AsyncSetSuggestedPrompts):
-        await say(self.config.resources.assistant.greeting_message)
-        await set_suggested_prompts(prompts=self.config.resources.assistant.greeting_prompts)
+        await say(self.config.get_message("assistant_greeting").text)
+        prompts = [{
+            "title": self.config.get_message(f"assistant_greeting_prompt_{i}_title").text,
+            "message": self.config.get_message(f"assistant_greeting_prompt_{i}_message").text
+        } for i in range(1, 4)]
+        await set_suggested_prompts(prompts=prompts)
 
     async def _handle_assistant_message(self, body: Dict[str, Any], set_status: AsyncSetStatus, ack: AsyncAck) -> None:
         self.logger.info("got slack assistant message event",
@@ -97,7 +101,7 @@ class SlackBot:
             event = SlackEvent(type=SlackEventType.MESSAGE, data=body["event"], user=body["event"]
                                ["user"], channel=body["event"]["channel"], message_id=body["event"]["client_msg_id"])
             await self.event_queue.put(event)
-            await set_status(self.config.resources.assistant.thinking_message)
+            await set_status(self.config.get_message("assistant_thinking").text)
         await ack()
 
     async def _handle_message(self, body: Dict[str, Any], ack: AsyncAck) -> None:
@@ -107,7 +111,7 @@ class SlackBot:
             event = SlackEvent(type=SlackEventType.MESSAGE, data=body["event"], user=body["event"]
                                ["user"], channel=body["event"]["channel"], message_id=body["event"]["client_msg_id"])
             await self.event_queue.put(event)
-            await self.client.add_reaction(event, self.config.resources.emoji["loading"])
+            await self.client.add_reaction(event, self.config.get_emoji("ai_thinking").emoji)
         await ack()
 
     async def _handle_app_mention(self, body: Dict[str, Any], ack: AsyncAck) -> None:
@@ -117,7 +121,7 @@ class SlackBot:
             event = SlackEvent(type=SlackEventType.APP_MENTION, data=body["event"], user=body["event"]
                                ["user"], channel=body["event"]["channel"], message_id=body["event"]["client_msg_id"])
             await self.event_queue.put(event)
-            await self.client.add_reaction(event, self.config.resources.emoji["loading"])
+            await self.client.add_reaction(event, self.config.get_emoji("ai_thinking").emoji)
         await ack()
 
     async def _handle_reaction_added(self, body: Dict[str, Any], ack: AsyncAck) -> None:
@@ -143,15 +147,15 @@ class SlackBot:
                 config=runnable_config,
             )
             if is_new_conversation.strip().lower() == "yes":
-                await self.client.remove_reaction(event, self.config.resources.emoji["loading"])
+                await self.client.remove_reaction(event, self.config.get_emoji("ai_thinking").emoji)
                 event.session_id = None
-                await self.client.reply_blocks(event, self.config.resources.new_conversation_message, [
+                await self.client.reply_blocks(event, self.config.get_message("new_conversation_title").text, [
                     {
                         "type": "context",
                         "elements": [
                             {
                                 "type": "plain_text",
-                                "text": f"💡 {self.config.resources.new_conversation_message}",
+                                "text": self.config.get_message("new_conversation_message").text,
                                 "emoji": True
                             }
                         ]
@@ -169,7 +173,7 @@ class SlackBot:
         self.logger.debug("agent_result", agent_result=agent_result)
 
         if not self.config.assistant:
-            await self.client.remove_reaction(event, self.config.resources.emoji["loading"])
+            await self.client.remove_reaction(event, self.config.get_emoji("ai_thinking").emoji)
 
         content, references = self.parse_agent_result(agent_result)
         await self.client.reply_markdown(event, content, references, in_replies=self.config.assistant)
@@ -193,7 +197,7 @@ class SlackBot:
         self.logger.debug("agent_result", agent_result=agent_result)
 
         content, references = self.parse_agent_result(agent_result)
-        await self.client.remove_reaction(event, self.config.resources.emoji["loading"])
+        await self.client.remove_reaction(event, self.config.get_emoji("ai_thinking").emoji)
         await self.client.reply_markdown(event, content, references, in_replies=True)
 
     async def _process_reaction_added_event(self, event: SlackEvent) -> None:
@@ -218,6 +222,8 @@ class SlackBot:
     def create_runnable_config(self, event: SlackEvent) -> RunnableConfig:
         return RunnableConfig(
             metadata={
+                "bot_id": self.config.bot_id,
+                "channel_id": event.channel,
                 "user_id": event.user,
                 "message_id": event.message_id,
                 "session_id": event.session_id,
@@ -259,10 +265,12 @@ class SlackBot:
             if not isinstance(message, ToolMessage):
                 continue
             tool_message = message
-            if isinstance(tool_message.artifact, list) and len(tool_message.artifact) > 0 and tool_message.name in self.config.resources.artifact_icon_emoji.keys():
+            if isinstance(tool_message.artifact, list) and len(tool_message.artifact) > 0:
                 references.append(SlackMessageReference(
-                    name=self.config.resources.tool_reference_message,
-                    icon_emoji=self.config.resources.artifact_icon_emoji[tool_message.name],
+                    name=self.config.get_message(
+                        "tool_artifact_title").text,
+                    icon_emoji=self.config.get_emoji(
+                        f"{tool_message.name}_tool_artifact_icon").emoji,
                     artifacts=[SlackMessageReferenceArtifact(title=artifact["title"], link=artifact["link"]) for artifact in tool_message.artifact if isinstance(
                         artifact["title"], str) and isinstance(artifact["link"], str)]
                 ))

@@ -254,7 +254,7 @@ class SlackClient(BaseSlackClient):
             "type": "context",
             "elements": [{
                     "type": "mrkdwn",
-                    "text": self.config.resources.content_disclaimer_message
+                    "text": self.config.get_message("content_disclaimer_message").text
             }]
         })
 
@@ -449,7 +449,7 @@ class SlackAsyncClient(BaseSlackClient):
             "type": "context",
             "elements": [{
                     "type": "mrkdwn",
-                    "text": self.config.resources.content_disclaimer_message
+                    "text": self.config.get_message("content_disclaimer_message").text
             }]
         })
 

@@ -1,4 +1,3 @@
-from functools import cache
 from typing import List, Tuple, Dict, Annotated
 
 from langchain_core.runnables import RunnableConfig
@@ -9,10 +8,7 @@ from langchain_google_community import GoogleSearchAPIWrapper
 from config import AgentConfig
 
 
-@cache
-def create_google_search_tool() -> BaseTool:
-
-    config = AgentConfig()
+def create_google_search_tool(config: AgentConfig) -> BaseTool:
     google_search_api = GoogleSearchAPIWrapper(
         google_api_key=config.google_api_key,
         google_cse_id=config.google_cse_id
@@ -28,6 +24,7 @@ def create_google_search_tool() -> BaseTool:
 
         return "\n".join([result["snippet"] for result in results]), results
 
-    google_search.description = config.prompt.tool[google_search.name]
+    google_search.description = config.get_prompt(
+        "google_search_tool").text
 
     return google_search

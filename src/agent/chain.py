@@ -12,7 +12,7 @@ def create_check_new_conversation_chain(config: AgentConfig) -> Runnable:
                             google_api_key=config.google_api_key)
     prompt = ChatPromptTemplate.from_messages([
         HumanMessagePromptTemplate.from_template(
-            config.prompt.chain["check_new_conversation"]),
+            config.get_prompt("check_new_conversation").text),
     ])
 
     parser = StrOutputParser()

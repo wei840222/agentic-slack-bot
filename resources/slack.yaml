@@ -1,0 +1,32 @@
+emojis:
+  - name: ai_thinking
+    emoji: ":loading:"
+  - name: google_search_tool_artifact_icon
+    emoji: ":google:"
+
+messages:
+  - name: content_disclaimer_message
+    text: ":thinking_face: AI 可能會發生錯誤，請查核重要資訊。"
+  - name: new_conversation_title
+    text: 開啟新的對話
+  - name: new_conversation_message
+    text: 💡 開啟新的對話
+  - name: tool_artifact_title
+    text: 參考資料
+
+  - name: assistant_thinking
+    text: 正在思考...
+  - name: assistant_greeting
+    text: 今天過的好嗎?
+  - name: assistant_greeting_prompt_1_title
+    text: 幫我算數學
+  - name: assistant_greeting_prompt_1_message
+    text: 1+1=?
+  - name: assistant_greeting_prompt_2_title
+    text: 寫一隻程式
+  - name: assistant_greeting_prompt_2_message
+    text: 幫我用 Python 寫一個插入排序法。
+  - name: assistant_greeting_prompt_3_title
+    text: 看看天氣
+  - name: assistant_greeting_prompt_3_message
+    text: 今天台北的天氣怎麼樣?

@@ -1,30 +1,18 @@
-
 from enum import Enum
-from typing import Dict, Annotated, Optional
+from typing import Annotated, Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic_settings_yaml import YamlBaseSettings
 from langchain_core.runnables import RunnableConfig, ensure_config
 
 from tracking import BaseTracker, LangfuseTracker, StdoutTracker
+from .prompt import Prompt, PromptConfig
 from .client import LangfuseConfig
 
 
-class Prompt(YamlBaseSettings):
-    model_config = SettingsConfigDict(
-        yaml_file="./assets/agent_prompt.yaml",
-        secrets_dir="./assets",
-        extra="ignore",
-    )
-
-    system: str = Field(
-        default="You are a helpful assistant.",
-        description="The system prompt to use for the agent's interactions."
-        "This prompt sets the context and behavior for the agent."
-    )
-    tool: Dict[str, str]
-    chain: Dict[str, str]
+class PromptProvider(Enum):
+    YAML = "yaml"
+    LANGFUSE = "langfuse"
 
 
 class TrackingProvider(Enum):
@@ -41,7 +29,13 @@ class AgentConfig(BaseSettings):
         extra="ignore",
     )
 
-    prompt: Prompt = Field(default_factory=Prompt)
+    _langfuse_config: LangfuseConfig = None
+    _prompt_config: PromptConfig = None
+
+    prompt_provider: PromptProvider = Field(
+        default=PromptProvider.YAML,
+        description="The provider to use for the agent's prompts."
+    )
 
     tracking_provider: TrackingProvider = Field(
         default=TrackingProvider.NONE,
@@ -70,14 +64,38 @@ class AgentConfig(BaseSettings):
         configurable = config.get("configurable") or {}
         return cls(**{k: v for k, v in configurable.items() if k in cls.model_fields})
 
+    def _get_langfuse_config(self) -> LangfuseConfig:
+        if self._langfuse_config is None:
+            self._langfuse_config = LangfuseConfig()
+        return self._langfuse_config
+
+    def get_prompt(self, name: str) -> Prompt:
+        match self.prompt_provider:
+            case PromptProvider.YAML:
+                if self._prompt_config is None:
+                    self._prompt_config = PromptConfig()
+                return self._prompt_config.get_prompt(name)
+            case PromptProvider.LANGFUSE:
+                client = self._get_langfuse_config().get_langfuse_client()
+                langfuse_prompt = client.get_prompt(
+                    name, label=client.environment)
+                return Prompt(
+                    name=langfuse_prompt.name,
+                    text=langfuse_prompt.get_langchain_prompt(),
+                    metadata=langfuse_prompt.config
+                )
+            case _:
+                raise ValueError(
+                    f"Invalid prompt provider: {self.prompt_provider}")
+
     def create_tracker(self) -> Optional[BaseTracker]:
         match self.tracking_provider:
             case TrackingProvider.LANGFUSE:
-                return LangfuseTracker(LangfuseConfig())
+                return LangfuseTracker(self._get_langfuse_config())
             case TrackingProvider.STDOUT:
                 return StdoutTracker()
             case TrackingProvider.NONE:
                 return None
-
-        raise ValueError(
-            f"Invalid tracking provider: {self.tracking_provider}")
+            case _:
+                raise ValueError(
+                    f"Invalid tracking provider: {self.tracking_provider}")

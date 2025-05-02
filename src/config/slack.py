@@ -1,28 +1,37 @@
-from typing import List, Dict
-from pydantic import Field
+from typing import List
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic_settings_yaml import YamlBaseSettings
 
 
-class SlackBotAssistantResources(BaseSettings):
-    thinking_message: str
-    greeting_message: str
-    greeting_prompts: List[Dict[str, str]]
+class SlackEmoji(BaseModel):
+    name: str
+    emoji: str
 
 
-class SlackBotResources(YamlBaseSettings):
+class SlackEmojiConfig(YamlBaseSettings):
     model_config = SettingsConfigDict(
-        yaml_file="./assets/slack_bot_resources.yaml",
-        secrets_dir="./assets",
+        yaml_file="./resources/slack.yaml",
+        secrets_dir="./resources",
         extra="ignore",
     )
 
-    emoji: Dict[str, str]
-    artifact_icon_emoji: Dict[str, str]
-    content_disclaimer_message: str
-    new_conversation_message: str
-    tool_reference_message: str
-    assistant: SlackBotAssistantResources
+    emojis: List[SlackEmoji] = Field(default_factory=list)
+
+
+class SlackMessage(BaseModel):
+    name: str
+    text: str
+
+
+class SlackMessageConfig(YamlBaseSettings):
+    model_config = SettingsConfigDict(
+        yaml_file="./resources/slack.yaml",
+        secrets_dir="./resources",
+        extra="ignore",
+    )
+
+    messages: List[SlackMessage] = Field(default_factory=list)
 
 
 class SlackConfig(BaseSettings):
@@ -38,4 +47,17 @@ class SlackConfig(BaseSettings):
     bot_id: str
     assistant: bool = False
 
-    resources: SlackBotResources = Field(default_factory=SlackBotResources)
+    emojis: SlackEmojiConfig = Field(default_factory=SlackEmojiConfig)
+    messages: SlackMessageConfig = Field(default_factory=SlackMessageConfig)
+
+    def get_emoji(self, name: str) -> SlackEmoji:
+        for emoji in self.emojis.emojis:
+            if emoji.name == name:
+                return emoji
+        raise ValueError(f"Emoji with name {name} not found")
+
+    def get_message(self, name: str) -> SlackMessage:
+        for message in self.messages.messages:
+            if message.name == name:
+                return message
+        raise ValueError(f"Message with name {name} not found")
