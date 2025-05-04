@@ -1,8 +1,10 @@
+import json
 import random
 from functools import cache
 import requests
 from markitdown import MarkItDown
 from mcp.server.fastmcp import FastMCP
+from mcp.types import TextContent, EmbeddedResource, TextResourceContents
 
 
 @cache
@@ -69,10 +71,12 @@ def scrape_url(url: str) -> str:
         The Markdown formatted content of the URL
     """
     requests_session = requests.Session()
-    md = MarkItDown(enable_plugins=False,
-                    requests_session=requests_session)
     requests_session.headers["User-Agent"] = generate_user_agent()
-    return md.convert_url(url).markdown.strip()
+    markitdown = MarkItDown(enable_plugins=False,
+                            requests_session=requests_session)
+    result = markitdown.convert_url(url)
+
+    return [TextContent(type="text", text=result.markdown.strip()), EmbeddedResource(type="resource", resource=TextResourceContents(uri=url, mimeType="application/json", text=json.dumps({"title": result.title, "link": url}, ensure_ascii=False)))]
 
 
 if __name__ == "__main__":
