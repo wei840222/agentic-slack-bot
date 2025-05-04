@@ -25,7 +25,7 @@ class SlackBot:
         self.client = SlackAsyncClient(self.config, self.app.client, logger)
         self.handler = AsyncSocketModeHandler(self.app, self.config.app_token)
         self.event_queue = asyncio.Queue()
-        self.tracker = self.agent_config.create_tracker()
+        self.tracker = self.agent_config.get_tracker()
 
         if self.config.assistant:
             self.assistant = AsyncAssistant()

@@ -3,16 +3,28 @@ from typing import Annotated, Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pymongo import AsyncMongoClient
 from langchain_core.runnables import RunnableConfig, ensure_config
+from langgraph.types import Checkpointer
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.mongodb.aio import AsyncMongoDBSaver
 
 from tracking import BaseTracker, LangfuseTracker, StdoutTracker
 from .prompt import Prompt, PromptConfig
 from .client import LangfuseConfig
 
+_checkpointer: Optional[Checkpointer] = None
+_tracker: Optional[BaseTracker] = None
+
 
 class PromptProvider(Enum):
     YAML = "yaml"
     LANGFUSE = "langfuse"
+
+
+class CheckpointerProvider(Enum):
+    MEMORY = "memory"
+    MONGODB = "mongodb"
 
 
 class TrackingProvider(Enum):
@@ -35,6 +47,16 @@ class AgentConfig(BaseSettings):
     prompt_provider: PromptProvider = Field(
         default=PromptProvider.YAML,
         description="The provider to use for the agent's prompts."
+    )
+
+    checkpointer_provider: CheckpointerProvider = Field(
+        default=CheckpointerProvider.MEMORY,
+        description="The provider to use for the agent's checkpointer."
+    )
+
+    checkpointer_mongodb_uri: Optional[str] = Field(
+        default=None,
+        description="The URI for the MongoDB database."
     )
 
     tracking_provider: TrackingProvider = Field(
@@ -88,14 +110,31 @@ class AgentConfig(BaseSettings):
                 raise ValueError(
                     f"Invalid prompt provider: {self.prompt_provider}")
 
-    def create_tracker(self) -> Optional[BaseTracker]:
-        match self.tracking_provider:
-            case TrackingProvider.LANGFUSE:
-                return LangfuseTracker(self._get_langfuse_config())
-            case TrackingProvider.STDOUT:
-                return StdoutTracker()
-            case TrackingProvider.NONE:
-                return None
-            case _:
-                raise ValueError(
-                    f"Invalid tracking provider: {self.tracking_provider}")
+    def get_checkpointer(self) -> Checkpointer:
+        global _checkpointer
+        if _checkpointer is None:
+            match self.checkpointer_provider:
+                case CheckpointerProvider.MEMORY:
+                    _checkpointer = MemorySaver()
+                case CheckpointerProvider.MONGODB:
+                    _checkpointer = AsyncMongoDBSaver(
+                        AsyncMongoClient(self.checkpointer_mongodb_uri))
+                case _:
+                    raise ValueError(
+                        f"Invalid checkpointer provider: {self.checkpointer_provider}")
+        return _checkpointer
+
+    def get_tracker(self) -> Optional[BaseTracker]:
+        global _tracker
+        if _tracker is None:
+            match self.tracking_provider:
+                case TrackingProvider.LANGFUSE:
+                    _tracker = LangfuseTracker(self._get_langfuse_config())
+                case TrackingProvider.STDOUT:
+                    _tracker = StdoutTracker()
+                case TrackingProvider.NONE:
+                    _tracker = None
+                case _:
+                    raise ValueError(
+                        f"Invalid tracking provider: {self.tracking_provider}")
+        return _tracker

@@ -1,27 +1,35 @@
-from functools import cache
+from typing import Dict, Any
 
 from langchain.chat_models import init_chat_model
 from langchain_core.runnables import Runnable
 from langchain_core.messages import AnyMessage, SystemMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableConfig
+from langchain_core.messages.utils import count_tokens_approximately
+from langmem.short_term import SummarizationNode
 from langgraph.prebuilt.chat_agent_executor import AgentState
 from langgraph.prebuilt import create_react_agent
-from langgraph.checkpoint.memory import MemorySaver
 
 from config import AgentConfig
 from .tool import create_google_search_tool
 
 
-@cache
-def get_memory_saver():
-    return MemorySaver()
+class State(AgentState):
+    context: Dict[str, Any]
 
 
 def create_agent(agent_config: AgentConfig) -> Runnable:
     provider, model = agent_config.model.split("/", maxsplit=1)
     model = init_chat_model(model, model_provider=provider,
                             google_api_key=agent_config.google_api_key)
+
+    summarization_node = SummarizationNode(
+        token_counter=count_tokens_approximately,
+        model=model,
+        max_tokens=65536,
+        max_summary_tokens=4096,
+        output_messages_key="llm_input_messages",
+    )
 
     tools = [create_google_search_tool(agent_config)]
 
@@ -31,7 +39,9 @@ def create_agent(agent_config: AgentConfig) -> Runnable:
     return create_react_agent(
         model=model,
         tools=tools,
-        checkpointer=get_memory_saver(),
+        pre_model_hook=summarization_node,
+        state_schema=State,
+        checkpointer=agent_config.get_checkpointer(),
         prompt=create_system_prompt,
         config_schema=AgentConfig,
     )
