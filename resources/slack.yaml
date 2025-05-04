@@ -13,6 +13,8 @@ messages:
     text: 💡 開啟新的對話
   - name: tool_artifact_title
     text: 參考資料
+  - name: ai_reply_too_long_warning_message
+    text: 訊息過長，已截斷...
 
   - name: assistant_thinking
     text: 正在思考...

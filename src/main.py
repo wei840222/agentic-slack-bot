@@ -1,6 +1,8 @@
 import signal
 import asyncio
 
+from langchain_mcp_adapters.client import MultiServerMCPClient, SSEConnection
+
 from config import BaseConfig
 from slack import SlackBot
 
@@ -24,7 +26,13 @@ async def main() -> None:
 
     async with SlackBot(config, logger) as bot:
         try:
-            await bot.run()
+            async with MultiServerMCPClient(
+                {
+                    "Crawler": SSEConnection(transport="sse", url="http://localhost:8000/sse")
+                }
+            ) as client:
+                config.agent.mcp_client = client
+                await bot.run()
         except asyncio.exceptions.CancelledError:
             logger.info("slack handler cancelled")
 

@@ -3,10 +3,7 @@ from langchain_core.runnables import Runnable
 from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableConfig
-from langchain_core.messages.utils import (
-    trim_messages,
-    count_tokens_approximately
-)
+from langchain_core.messages.utils import trim_messages, count_tokens_approximately
 from langchain_core.messages import RemoveMessage
 from langgraph.graph.message import REMOVE_ALL_MESSAGES
 from langgraph.prebuilt.chat_agent_executor import AgentState
@@ -23,7 +20,11 @@ def create_agent(agent_config: AgentConfig) -> Runnable:
     model = init_chat_model(model, model_provider=provider,
                             google_api_key=agent_config.google_api_key)
 
-    tools = [create_google_search_tool(agent_config)]
+    mcp_tools = []
+    if agent_config.mcp_client:
+        mcp_tools = agent_config.mcp_client.get_tools()
+
+    tools = [create_google_search_tool(agent_config)] + mcp_tools
 
     def trim_messages_hook(state: AgentState) -> AgentState:
         full_messages = state["messages"]

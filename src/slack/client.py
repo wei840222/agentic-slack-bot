@@ -238,6 +238,21 @@ class SlackClient(BaseSlackClient):
             "text": markdown
         }]
 
+        if len(blocks[0]["text"]) > 10000:
+            blocks[0]["text"] = blocks[0]["text"][:10000]
+            blocks.append({
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "plain_text",
+                        "text": self.config.get_message("ai_reply_too_long_warning_message").text,
+                        "emoji": True
+                    }
+                ]
+            })
+            self.logger.warning("slack.client.reply_markdown got too long message",
+                                markdown_length=len(markdown))
+
         if references:
             for reference in references:
                 artifact_text = "\n".join(
@@ -432,6 +447,21 @@ class SlackAsyncClient(BaseSlackClient):
             "type": "markdown",
             "text": markdown
         }]
+
+        if len(blocks[0]["text"]) > 10000:
+            blocks[0]["text"] = blocks[0]["text"][:10000]
+            blocks.append({
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "plain_text",
+                        "text": self.config.get_message("ai_reply_too_long_warning_message").text,
+                        "emoji": True
+                    }
+                ]
+            })
+            self.logger.warning("slack.async_client.reply_markdown got too long message",
+                                markdown_length=len(markdown))
 
         if references:
             for reference in references:

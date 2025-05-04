@@ -9,3 +9,10 @@ SLACK_BOT_ID=U000000
 GOOGLE_API_KEY=aaaaaaaaaaaaa
 GOOGLE_CSE_ID=xxxxxxxxxxxx
 ```
+
+How to run local ?
+
+```
+python ./src/mcp/crawler.py
+python ./src/main.py
+```

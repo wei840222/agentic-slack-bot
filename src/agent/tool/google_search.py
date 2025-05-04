@@ -22,7 +22,7 @@ def create_google_search_tool(config: AgentConfig) -> BaseTool:
         results = google_search_api.results(
             query, num_results=config.google_search_num_results)
 
-        return "\n".join([result["snippet"] for result in results]), results
+        return "\n\n".join([f"title: {result['title']}\nlink: {result['link']}\nsummary: {result['snippet']}" for result in results]), results
 
     google_search.description = config.get_prompt(
         "google_search_tool").text
