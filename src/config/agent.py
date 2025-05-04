@@ -59,6 +59,11 @@ class AgentConfig(BaseSettings):
         description="The URI for the MongoDB database."
     )
 
+    checkpointer_max_tokens: int = Field(
+        default=8192,
+        description="The maximum number of tokens to use for the agent's checkpointer aka the number of tokens to keep in the memory."
+    )
+
     tracking_provider: TrackingProvider = Field(
         default=TrackingProvider.NONE,
         description="The provider to use for tracking the agent's interactions."
@@ -73,7 +78,7 @@ class AgentConfig(BaseSettings):
     google_api_key: str = Field(description="The API key for the Google API.")
     google_cse_id: str = Field(description="The CSE ID for the Google API.")
     google_search_num_results: int = Field(
-        default=5,
+        default=3,
         description="The number of search results to return for each search query."
     )
 
