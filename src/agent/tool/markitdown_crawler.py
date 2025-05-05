@@ -6,11 +6,12 @@ import requests
 from markitdown import MarkItDown
 
 from config import AgentConfig
+from .types import Artifact
 
 
 def create_markitdown_crawler_tool(config: AgentConfig) -> BaseTool:
     @tool(response_format="content_and_artifact")
-    def markitdown_crawler(url: str) -> Tuple[str, List[Dict]]:
+    def markitdown_crawler(url: str) -> Tuple[str, List[Artifact]]:
         "Scrape a URL to Markdown format."
 
         user_agent = ua_generator.generate(device="desktop", platform=(
@@ -21,7 +22,7 @@ def create_markitdown_crawler_tool(config: AgentConfig) -> BaseTool:
                                 requests_session=requests_session)
         result = markitdown.convert_url(url)
 
-        return result.markdown.strip(), [{"title": result.title, "link": url}]
+        return result.markdown.strip(), [Artifact(title=result.title, link=url)]
 
     markitdown_crawler.description = config.get_prompt(
         "markitdown_crawler_tool").text

@@ -1,7 +1,8 @@
 import signal
 import asyncio
+
 from config import BaseConfig
-from slack import SlackBot
+from slack_bot import SlackBot
 
 config = BaseConfig()
 logger = config.logger.get_logger()

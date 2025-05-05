@@ -11,9 +11,10 @@ from slack_bolt.context.set_status.async_set_status import AsyncSetStatus
 from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
-from .client import SlackEvent, SlackEventType, SlackAsyncClient, SlackMessageReference, SlackMessageReferenceArtifact
+
 from config import BaseConfig
-from agent import create_agent, create_check_new_conversation_chain
+from agent import create_agent, create_check_new_conversation_chain, create_supervisor_graph
+from .client import SlackEvent, SlackEventType, SlackAsyncClient, SlackMessageReference, SlackMessageReferenceArtifact
 
 
 class SlackBot:
@@ -163,7 +164,7 @@ class SlackBot:
                 ])
                 return
 
-        agent = create_agent(self.agent_config)
+        agent = create_supervisor_graph(self.agent_config)
         agent_result = await agent.ainvoke(
             input={
                 "messages": [HumanMessage(content=event.data["text"])]
@@ -187,7 +188,7 @@ class SlackBot:
             runnable_config = self.tracker.inject_runnable_config(
                 runnable_config)
 
-        agent = create_agent(self.agent_config)
+        agent = create_supervisor_graph(self.agent_config)
         agent_result = await agent.ainvoke(
             input={
                 "messages": [HumanMessage(content=event.data["text"])]
@@ -255,13 +256,17 @@ class SlackBot:
         content = content.strip()
 
         references: List[SlackMessageReference] = []
-        found_ai_message = False
+        # found_ai_message = False
         for message in result["messages"][::-1]:
-            if isinstance(message, AIMessage):
-                if found_ai_message:
-                    break
-                found_ai_message = True
-                continue
+            # if isinstance(message, ToolMessage) and message.name == "transfer_back_to_supervisor_agent":
+            #     continue
+            # if isinstance(message, AIMessage) and message.response_metadata.get("__is_handoff_back"):
+            #     continue
+            # if isinstance(message, AIMessage):
+            #     if found_ai_message:
+            #         break
+            #     found_ai_message = True
+            #     continue
             if not isinstance(message, ToolMessage):
                 continue
             tool_message = message
@@ -274,6 +279,8 @@ class SlackBot:
                     artifacts=[SlackMessageReferenceArtifact(title=artifact["title"], link=artifact["link"]) for artifact in tool_message.artifact if isinstance(
                         artifact["title"], str) and isinstance(artifact["link"], str)]
                 ))
-                break
+                # break
+
+        references.reverse()
 
         return content, references

@@ -67,3 +67,25 @@ def create_agent(agent_config: AgentConfig) -> Runnable:
         prompt=create_system_prompt,
         checkpointer=agent_config.get_checkpointer(),
     )
+
+
+def create_web_research_agent(agent_config: AgentConfig) -> Runnable:
+    provider, model = agent_config.model.split("/", maxsplit=1)
+
+    model = init_chat_model(model, model_provider=provider,
+                            google_api_key=agent_config.google_api_key)
+
+    tools = [create_google_search_tool(
+        agent_config), create_markitdown_crawler_tool(agent_config)]
+
+    def create_system_prompt(state: AgentState) -> list[AnyMessage]:
+        return [SystemMessage(agent_config.get_prompt("web_research_agent_system_prompt").text)] + state["messages"]
+
+    return create_react_agent(
+        name="web_research_agent",
+        state_schema=AgentState,
+        config_schema=AgentConfig,
+        model=model,
+        tools=tools,
+        prompt=create_system_prompt,
+    )

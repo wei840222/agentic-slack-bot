@@ -13,6 +13,7 @@ dependencies = [
     "langfuse>=2.60.3",
     "langgraph>=0.3.34",
     "langgraph-checkpoint-mongodb>=0.1.3",
+    "langgraph-supervisor>=0.0.20",
     "langmem>=0.0.25",
     "markitdown>=0.1.1",
     "mcp>=1.6.0",
