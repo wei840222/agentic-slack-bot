@@ -19,6 +19,13 @@ prompts:
       Args:
           query: The search query.
 
+  - name: markitdown_crawler_tool
+    text: |
+      Scrape a URL to Markdown format.
+
+      Args:
+        url: The URL to scrape.
+
   - name: check_new_conversation
     text: |
       Classify the following input means to start a new conversation.

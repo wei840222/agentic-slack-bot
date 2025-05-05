@@ -3,7 +3,7 @@ emojis:
     emoji: ":loading:"
   - name: google_search_tool_artifact_icon
     emoji: ":google:"
-  - name: scrape_url_tool_artifact_icon
+  - name: markitdown_crawler_tool_artifact_icon
     emoji: ":earth_asia:"
 
 messages:

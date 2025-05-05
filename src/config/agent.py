@@ -5,7 +5,6 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pymongo import AsyncMongoClient
 from langchain_core.runnables import RunnableConfig, ensure_config
-from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.types import Checkpointer
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.checkpoint.mongodb.aio import AsyncMongoDBSaver
@@ -63,11 +62,6 @@ class AgentConfig(BaseSettings):
     checkpointer_max_tokens: int = Field(
         default=65536*4,
         description="The maximum number of tokens to use for the agent's checkpointer aka the number of tokens to keep in the memory."
-    )
-
-    mcp_client: Optional[MultiServerMCPClient] = Field(
-        default=None,
-        description="The MCP client to use for the agent's interactions."
     )
 
     tracking_provider: TrackingProvider = Field(

@@ -10,7 +10,7 @@ from langgraph.prebuilt.chat_agent_executor import AgentState
 from langgraph.prebuilt import create_react_agent
 
 from config import AgentConfig, LoggerConfig
-from .tool import create_google_search_tool
+from .tool import create_google_search_tool, create_markitdown_crawler_tool
 
 
 def create_agent(agent_config: AgentConfig) -> Runnable:
@@ -20,11 +20,8 @@ def create_agent(agent_config: AgentConfig) -> Runnable:
     model = init_chat_model(model, model_provider=provider,
                             google_api_key=agent_config.google_api_key)
 
-    mcp_tools = []
-    if agent_config.mcp_client:
-        mcp_tools = agent_config.mcp_client.get_tools()
-
-    tools = [create_google_search_tool(agent_config)] + mcp_tools
+    tools = [create_google_search_tool(
+        agent_config), create_markitdown_crawler_tool(agent_config)]
 
     def trim_messages_hook(state: AgentState) -> AgentState:
         full_messages = state["messages"]
