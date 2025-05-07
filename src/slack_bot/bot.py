@@ -1,6 +1,7 @@
 import json
 import asyncio
 import logging
+from collections import OrderedDict
 from typing import Dict, Any, Optional, Tuple, List
 
 from slack_bolt.app.async_app import AsyncApp, AsyncAssistant
@@ -255,32 +256,35 @@ class SlackBot:
             content = "\n".join(text_item)
         content = content.strip()
 
-        references: List[SlackMessageReference] = []
-        # found_ai_message = False
+        references = OrderedDict()
+        dedupe_artifact = set()
         for message in result["messages"][::-1]:
-            # if isinstance(message, ToolMessage) and message.name == "transfer_back_to_supervisor_agent":
-            #     continue
-            # if isinstance(message, AIMessage) and message.response_metadata.get("__is_handoff_back"):
-            #     continue
-            # if isinstance(message, AIMessage):
-            #     if found_ai_message:
-            #         break
-            #     found_ai_message = True
-            #     continue
+            if isinstance(message, HumanMessage):
+                break
             if not isinstance(message, ToolMessage):
                 continue
-            tool_message = message
-            if isinstance(tool_message.artifact, list) and len(tool_message.artifact) > 0:
-                references.append(SlackMessageReference(
-                    name=self.config.get_message(
-                        "tool_artifact_title").text,
-                    icon_emoji=self.config.get_emoji(
-                        f"{tool_message.name}_tool_artifact_icon").emoji,
-                    artifacts=[SlackMessageReferenceArtifact(title=artifact["title"], link=artifact["link"]) for artifact in tool_message.artifact if isinstance(
-                        artifact["title"], str) and isinstance(artifact["link"], str)]
-                ))
-                # break
+            if isinstance(message.artifact, list) and len(message.artifact) > 0:
+                if message.name not in references:
+                    references[message.name] = []
+                reference = SlackMessageReference(name=self.config.get_message(
+                    "tool_artifact_title").text, icon_emoji=self.config.get_emoji(f"{message.name}_tool_artifact_icon").emoji, artifacts=[])
+                for artifact in message.artifact:
+                    if not isinstance(artifact["title"], str) or not isinstance(artifact["link"], str):
+                        continue
+                    key = f"{message.name.strip()}: [{artifact['title'].strip()}]({artifact['link'].strip()})"
+                    if key in dedupe_artifact:
+                        continue
+                    dedupe_artifact.add(key)
+                    reference.artifacts.append(SlackMessageReferenceArtifact(
+                        title=artifact["title"].strip(), link=artifact["link"].strip()))
+                if len(reference.artifacts) > 0:
+                    references[message.name].append(reference)
 
+        references = list(references.values())
+        references_list = []
+        for reference in references:
+            references_list.extend(reference)
+        references = references_list
         references.reverse()
 
         return content, references
