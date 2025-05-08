@@ -14,7 +14,7 @@ from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 
 from config import BaseConfig
-from agent import create_agent, create_check_new_conversation_chain, create_supervisor_graph
+from agent import create_check_new_conversation_chain, create_supervisor_graph
 from .client import SlackEvent, SlackEventType, SlackAsyncClient, SlackMessageReference, SlackMessageReferenceArtifact
 
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PYTHONPATH=$PYTHONPATH:$(pwd)/src
+export PYTHONPATH=$PYTHONPATH:$(pwd)/src
 
 case "$@" in
    "slack-bot")
@@ -11,8 +11,12 @@ case "$@" in
         python -m mcp_server
     ;;
 
+    "web")
+        streamlit run ./src/streamlit_web/app.py
+    ;;
+
    *)
         echo "not support command: $@"
-        echo "available commands: slack-bot, mcp-server"
+        echo "available commands: slack-bot, mcp-server, web"
    ;;
 esac

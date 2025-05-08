@@ -11,6 +11,12 @@ from .agent import create_web_research_agent
 
 
 def create_supervisor_graph(agent_config: AgentConfig) -> StateGraph:
+    """
+    Create a supervisor graph for the multi-agent system.
+    LangGraph command hand-off will raise error on Langfuse ui. It's normal.
+    https://github.com/langfuse/langfuse/issues/5035
+    """
+
     provider, model = agent_config.model.split("/", maxsplit=1)
 
     model = init_chat_model(model, model_provider=provider,
@@ -38,4 +44,4 @@ def create_supervisor_graph(agent_config: AgentConfig) -> StateGraph:
         supervisor_name="supervisor_agent",
     )
 
-    return supervisor_graph.compile(checkpointer=agent_config.get_checkpointer())
+    return supervisor_graph.compile(checkpointer=agent_config.get_checkpointer(async_mongodb=agent_config.checkpointer_mongodb_async))
