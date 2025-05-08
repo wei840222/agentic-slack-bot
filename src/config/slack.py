@@ -11,8 +11,8 @@ class SlackEmoji(BaseModel):
 
 class SlackEmojiConfig(YamlBaseSettings):
     model_config = SettingsConfigDict(
-        yaml_file="./resources/slack.yaml",
-        secrets_dir="./resources",
+        yaml_file="./config/slack.yaml",
+        secrets_dir="./secret",
         extra="ignore",
     )
 
@@ -26,8 +26,8 @@ class SlackMessage(BaseModel):
 
 class SlackMessageConfig(YamlBaseSettings):
     model_config = SettingsConfigDict(
-        yaml_file="./resources/slack.yaml",
-        secrets_dir="./resources",
+        yaml_file="./config/slack.yaml",
+        secrets_dir="./secret",
         extra="ignore",
     )
 

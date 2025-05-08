@@ -13,8 +13,8 @@ class Prompt(BaseModel):
 
 class PromptConfig(YamlBaseSettings):
     model_config = SettingsConfigDict(
-        yaml_file="./resources/agent.yaml",
-        secrets_dir="./resources",
+        yaml_file="./config/agent.yaml",
+        secrets_dir="./secret",
         extra="ignore",
     )
 

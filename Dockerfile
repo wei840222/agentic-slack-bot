@@ -37,9 +37,8 @@ WORKDIR /app
 COPY --from=builder --chown=${uid}:${gid} /app /app
 
 ENV PATH="/app/.venv/bin:$PATH"
-ENV PYTHONPATH="/app:$PYTHONPATH"
 ENV RELEASE=${RELEASE:-nightly}
 ENV VERSION=${VERSION:-0.0.0}
 
-ENTRYPOINT ["python"]
-CMD ["./src/main.py"]
+ENTRYPOINT ["./run.sh"]
+CMD ["slack-bot"]

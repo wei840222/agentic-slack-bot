@@ -13,6 +13,6 @@ GOOGLE_CSE_ID=xxxxxxxxxxxx
 How to run local ?
 
 ```
-python ./src/mcp/crawler.py
-python ./src/main.py
+./run.sh slack-bot
+./run.sh mcp-server
 ```
