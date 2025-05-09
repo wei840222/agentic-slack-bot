@@ -7,17 +7,15 @@ from langchain.callbacks.streamlit import StreamlitCallbackHandler
 
 
 from agent import create_supervisor_graph, parse_agent_result
-from config import get_config, AgentConfig
-
-logger = get_config().get_logger()
+from config import AgentConfig
 
 
 @st.cache_resource
 def get_agent_config() -> AgentConfig:
-    config = get_config()
-    config.agent_config.checkpointer_mongodb_async = False
-    logger.debug("config loaded", config=config)
-    return config.agent_config
+    config = AgentConfig()
+    config.checkpointer_mongodb_async = False
+    config.get_logger().debug("config loaded", config=config)
+    return config
 
 
 @st.cache_resource
@@ -31,6 +29,8 @@ def simulate_stream(message: str):
         time.sleep(0.02)
 
 
+logger = get_agent_config().get_logger()
+
 st.title("Agentic Bot")
 
 if "messages" not in st.session_state:
@@ -39,6 +39,8 @@ if "messages" not in st.session_state:
 
 for message in st.session_state["messages"]:
     with st.chat_message(message["role"]):
+        if message["role"] == "assistant":
+            st.empty()
         st.markdown(message["content"])
         if "references" in message:
             for reference in message["references"]:
@@ -81,5 +83,5 @@ if message := st.chat_input(get_agent_config().get_message("assistant_greeting")
                 st.markdown("\n\n".join(
                     [f"[{artifact.title}]({artifact.link})" for artifact in reference.artifacts]))
 
-    st.session_state.messages.append(
-        {"role": "assistant", "content": content, "references": references})
+        st.session_state.messages.append(
+            {"role": "assistant", "content": content, "references": references})

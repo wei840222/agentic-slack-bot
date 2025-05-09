@@ -12,15 +12,15 @@ from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 
-from config import BaseConfig
+from config import SlackConfig
 from agent import create_check_new_conversation_chain, create_supervisor_graph, parse_agent_result
 from .client import SlackEvent, SlackEventType, SlackAsyncClient
 
 
 class SlackBot:
-    def __init__(self, config: BaseConfig, logger: Optional[logging.Logger] = None):
+    def __init__(self, config: SlackConfig, logger: Optional[logging.Logger] = None):
         self.logger = logger or config.get_logger()
-        self.config = config.slack_config
+        self.config = config
         self.agent_config = config.agent_config
         self.app = AsyncApp(token=self.config.bot_token)
         self.client = SlackAsyncClient(self.config, self.app.client, logger)

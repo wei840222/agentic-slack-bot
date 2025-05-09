@@ -10,7 +10,7 @@ from slack_sdk.web.async_client import AsyncWebClient
 from slack_sdk.web import WebClient
 from slack_sdk.errors import SlackApiError
 
-from config import SlackConfig, get_config
+from config import SlackConfig, LoggerConfig
 from agent import Reference
 
 
@@ -128,7 +128,7 @@ class SlackClient(BaseSlackClient):
 
         return result
 
-    @backoff.on_exception(backoff.expo, SlackApiError, max_time=60, giveup=slack_api_error_is_not_retryable, logger=get_config().get_logger())
+    @backoff.on_exception(backoff.expo, SlackApiError, max_time=60, giveup=slack_api_error_is_not_retryable, logger=LoggerConfig().logger)
     def fetch_conversations_replies(self, channel: str, thread_ts: str, limit: int = 150) -> List[SlackMessage]:
         self.logger.info("fetching conversations replies",
                          channel=channel, thread_ts=thread_ts)
@@ -338,7 +338,7 @@ class SlackAsyncClient(BaseSlackClient):
 
         return result
 
-    @backoff.on_exception(backoff.expo, SlackApiError, max_time=60, giveup=slack_api_error_is_not_retryable, logger=get_config().get_logger())
+    @backoff.on_exception(backoff.expo, SlackApiError, max_time=60, giveup=slack_api_error_is_not_retryable, logger=LoggerConfig().logger)
     async def fetch_conversations_replies(self, channel: str, thread_ts: str, limit: int = 150) -> List[SlackMessage]:
         self.logger.info("fetching conversations replies",
                          channel=channel, thread_ts=thread_ts)
