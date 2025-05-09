@@ -12,7 +12,7 @@ case "$@" in
     ;;
 
     "web")
-        streamlit run ./src/streamlit_web/👋_Hello.py
+        streamlit run --theme.base=dark ./src/streamlit_web/👋_Hello.py
     ;;
 
    *)
