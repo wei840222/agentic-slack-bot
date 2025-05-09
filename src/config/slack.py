@@ -1,37 +1,7 @@
-from typing import List
-from pydantic import BaseModel, Field
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic_settings_yaml import YamlBaseSettings
 
-
-class SlackEmoji(BaseModel):
-    name: str
-    emoji: str
-
-
-class SlackEmojiConfig(YamlBaseSettings):
-    model_config = SettingsConfigDict(
-        yaml_file="./config/slack.yaml",
-        secrets_dir="./secret",
-        extra="ignore",
-    )
-
-    emojis: List[SlackEmoji] = Field(default_factory=list)
-
-
-class SlackMessage(BaseModel):
-    name: str
-    text: str
-
-
-class SlackMessageConfig(YamlBaseSettings):
-    model_config = SettingsConfigDict(
-        yaml_file="./config/slack.yaml",
-        secrets_dir="./secret",
-        extra="ignore",
-    )
-
-    messages: List[SlackMessage] = Field(default_factory=list)
+from .message import EmojiConfig, MessageConfig
 
 
 class SlackConfig(BaseSettings):
@@ -47,17 +17,5 @@ class SlackConfig(BaseSettings):
     bot_id: str
     assistant: bool = False
 
-    emojis: SlackEmojiConfig = Field(default_factory=SlackEmojiConfig)
-    messages: SlackMessageConfig = Field(default_factory=SlackMessageConfig)
-
-    def get_emoji(self, name: str) -> SlackEmoji:
-        for emoji in self.emojis.emojis:
-            if emoji.name == name:
-                return emoji
-        raise ValueError(f"Emoji with name {name} not found")
-
-    def get_message(self, name: str) -> SlackMessage:
-        for message in self.messages.messages:
-            if message.name == name:
-                return message
-        raise ValueError(f"Message with name {name} not found")
+    emojis: EmojiConfig = Field(default_factory=EmojiConfig)
+    messages: MessageConfig = Field(default_factory=MessageConfig)

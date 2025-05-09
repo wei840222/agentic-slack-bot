@@ -10,8 +10,8 @@ from slack_sdk.web.async_client import AsyncWebClient
 from slack_sdk.web import WebClient
 from slack_sdk.errors import SlackApiError
 
-from config.logger import LoggerConfig
-from config import SlackConfig
+from config import LoggerConfig, SlackConfig
+from agent import Reference
 
 
 class SlackChannelHistory(TypedDict):
@@ -51,18 +51,6 @@ class SlackEvent(BaseModel):
     channel: str
     message_id: Optional[str] = None
     session_id: Optional[str] = None
-
-
-class SlackMessageReferenceArtifact(BaseModel):
-    title: str
-    link: str
-    content: Optional[str] = None
-
-
-class SlackMessageReference(BaseModel):
-    name: str
-    icon_emoji: str
-    artifacts: List[SlackMessageReferenceArtifact] = []
 
 
 def slack_api_error_is_not_retryable(e: SlackApiError):
@@ -232,7 +220,7 @@ class SlackClient(BaseSlackClient):
         self.logger.debug("slack.client.reactions_remove", reaction=reaction,
                           slack_response=json.dumps(response.data, ensure_ascii=False))
 
-    def reply_markdown(self, event: SlackEvent, markdown: str, references: Optional[List[SlackMessageReference]] = None, in_replies: bool = False) -> None:
+    def reply_markdown(self, event: SlackEvent, markdown: str, references: Optional[List[Reference]] = None, in_replies: bool = False) -> None:
         blocks = [{
             "type": "markdown",
             "text": markdown
@@ -245,7 +233,7 @@ class SlackClient(BaseSlackClient):
                 "elements": [
                     {
                         "type": "plain_text",
-                        "text": self.config.get_message("ai_reply_too_long_warning_message").text,
+                        "text": self.config.messages["ai_reply_too_long_warning_message"],
                         "emoji": True
                     }
                 ]
@@ -261,7 +249,7 @@ class SlackClient(BaseSlackClient):
                     "type": "context",
                     "elements": [{
                         "type": "mrkdwn",
-                        "text": f"{reference.icon_emoji} *{reference.name}*\n{artifact_text}"
+                        "text": f"{reference.icon_emoji} *{reference.title}*\n`#{reference.source}`\n{artifact_text}"
                     }]
                 })
 
@@ -269,7 +257,7 @@ class SlackClient(BaseSlackClient):
             "type": "context",
             "elements": [{
                     "type": "mrkdwn",
-                    "text": self.config.get_message("content_disclaimer_message").text
+                    "text": self.config.messages["content_disclaimer_message"]
             }]
         })
 
@@ -442,7 +430,7 @@ class SlackAsyncClient(BaseSlackClient):
         self.logger.debug("slack.async_client.reactions_remove", reaction=reaction,
                           slack_response=json.dumps(response.data, ensure_ascii=False))
 
-    async def reply_markdown(self, event: SlackEvent, markdown: str, references: Optional[List[SlackMessageReference]] = None, in_replies: bool = False) -> None:
+    async def reply_markdown(self, event: SlackEvent, markdown: str, references: Optional[List[Reference]] = None, in_replies: bool = False) -> None:
         blocks = [{
             "type": "markdown",
             "text": markdown
@@ -455,7 +443,7 @@ class SlackAsyncClient(BaseSlackClient):
                 "elements": [
                     {
                         "type": "plain_text",
-                        "text": self.config.get_message("ai_reply_too_long_warning_message").text,
+                        "text": self.config.messages["ai_reply_too_long_warning_message"],
                         "emoji": True
                     }
                 ]
@@ -471,7 +459,7 @@ class SlackAsyncClient(BaseSlackClient):
                     "type": "context",
                     "elements": [{
                         "type": "mrkdwn",
-                        "text": f"{reference.icon_emoji} *{reference.name}*\n{artifact_text}"
+                        "text": f"{reference.icon_emoji} *{reference.title}*\n`#{reference.source}`\n{artifact_text}"
                     }]
                 })
 
@@ -479,7 +467,7 @@ class SlackAsyncClient(BaseSlackClient):
             "type": "context",
             "elements": [{
                     "type": "mrkdwn",
-                    "text": self.config.get_message("content_disclaimer_message").text
+                    "text": self.config.messages["content_disclaimer_message"]
             }]
         })
 
@@ -493,7 +481,6 @@ class SlackAsyncClient(BaseSlackClient):
             metadata={
                 "event_type": f"reply_{event.type.value}",
                 "event_payload": {
-                    "reply_message": event.data.get("text", ""),
                     "reply_message_id": event.message_id or event.data["client_msg_id"],
                     "reply_session_id": event.session_id or event.message_id or event.data["client_msg_id"],
                 }
@@ -519,5 +506,5 @@ class SlackAsyncClient(BaseSlackClient):
             }
         )
 
-        self.logger.debug("slack.client.chat_postMessage", blocks=blocks,
+        self.logger.debug("slack.async_client.chat_postMessage", blocks=blocks,
                           slack_response=json.dumps(response.data, ensure_ascii=False))

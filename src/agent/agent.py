@@ -1,7 +1,3 @@
-import json
-from typing import Dict, Any, Tuple, List, Optional
-from collections import OrderedDict
-from pydantic import BaseModel
 from langchain.chat_models import init_chat_model
 from langchain_core.runnables import Runnable
 from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, ToolMessage
@@ -13,73 +9,8 @@ from langgraph.graph.message import REMOVE_ALL_MESSAGES
 from langgraph.prebuilt.chat_agent_executor import AgentState
 from langgraph.prebuilt import create_react_agent
 
-from config import BaseConfig, AgentConfig, LoggerConfig
+from config import AgentConfig, LoggerConfig
 from .tool import create_google_search_tool, create_markitdown_crawler_tool
-
-
-class ReferenceArtifact(BaseModel):
-    title: str
-    link: str
-    content: Optional[str] = None
-
-
-class Reference(BaseModel):
-    name: str
-    icon_emoji: str
-    artifacts: List[ReferenceArtifact] = []
-
-
-def parse_agent_result(config: BaseConfig, result: Dict[str, Any]) -> Tuple[str, List[Reference]]:
-    content: str | list[str | dict] = result["messages"][-1].content
-
-    if isinstance(content, list):
-        text_item = []
-        for result_item in result:
-            match result_item:
-                case str():
-                    if result_item.strip() == "":
-                        continue
-                    text_item.append(result_item)
-                case _:
-                    config.logger.get_logger().warning("unknown result item type", result_item=json.dumps(
-                        result_item, ensure_ascii=False))
-        if len(text_item) <= 0:
-            text_item.append("...")
-        content = "\n".join(text_item)
-    content = content.strip()
-
-    references = OrderedDict()
-    dedupe_artifact = set()
-    for message in result["messages"][::-1]:
-        if isinstance(message, HumanMessage):
-            break
-        if not isinstance(message, ToolMessage):
-            continue
-        if isinstance(message.artifact, list) and len(message.artifact) > 0:
-            if message.name not in references:
-                references[message.name] = []
-            reference = Reference(name=config.slack.get_message(
-                "tool_artifact_title").text, icon_emoji=config.slack.get_emoji(f"{message.name}_tool_artifact_icon").emoji, artifacts=[])
-            for artifact in message.artifact:
-                if not isinstance(artifact["title"], str) or not isinstance(artifact["link"], str):
-                    continue
-                key = f"{message.name.strip()}: [{artifact['title'].strip()}]({artifact['link'].strip()})"
-                if key in dedupe_artifact:
-                    continue
-                dedupe_artifact.add(key)
-                reference.artifacts.append(ReferenceArtifact(
-                    title=artifact["title"].strip(), link=artifact["link"].strip()))
-            if len(reference.artifacts) > 0:
-                references[message.name].append(reference)
-
-    references = list(references.values())
-    references_list = []
-    for reference in references:
-        references_list.extend(reference)
-    references = references_list
-    references.reverse()
-
-    return content, references
 
 
 def create_agent(agent_config: AgentConfig) -> Runnable:

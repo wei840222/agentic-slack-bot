@@ -3,19 +3,27 @@ import uuid
 import streamlit as st
 from langchain.schema.runnable.config import RunnableConfig
 from langchain_core.messages import HumanMessage
+from langchain.callbacks.streamlit import StreamlitCallbackHandler
 
 from config import BaseConfig
 from agent import create_supervisor_graph, parse_agent_result
 
-config = BaseConfig()
-logger = config.logger.get_logger()
-logger.debug("config loaded", config=config)
+
+@st.cache_resource
+def get_config():
+    config = BaseConfig()
+    config.agent.checkpointer_mongodb_async = False
+    config.logger.get_logger().debug("config loaded", config=config)
+    return config
 
 
 @st.cache_resource
 def get_graph():
-    config.agent.checkpointer_mongodb_async = False
-    return create_supervisor_graph(config.agent)
+    return create_supervisor_graph(get_config().agent)
+
+
+logger = get_config().logger.get_logger()
+agent_config = get_config().agent
 
 
 def simulate_stream(message: str):
@@ -35,11 +43,11 @@ for message in st.session_state["messages"]:
         st.markdown(message["content"])
         if "references" in message:
             for reference in message["references"]:
-                with st.expander(f"📚 **{reference.name}**"):
+                with st.expander(f"{reference.icon_emoji} **{reference.title}**\n\n`#{reference.source}`"):
                     st.markdown("\n\n".join(
                         [f"[{artifact.title}]({artifact.link})" for artifact in reference.artifacts]))
 
-if message := st.chat_input(config.slack.get_message("assistant_greeting").text):
+if message := st.chat_input(agent_config.get_message("assistant_greeting")):
     with st.chat_message("user"):
         st.markdown(message)
         st.session_state.messages.append({"role": "user", "content": message})
@@ -47,7 +55,8 @@ if message := st.chat_input(config.slack.get_message("assistant_greeting").text)
     with st.chat_message("assistant"):
         graph = get_graph()
         message_id = str(uuid.uuid4())
-        runnable_config = config.agent.get_tracker().inject_runnable_config(RunnableConfig(
+        thinking_placeholder = st.empty()
+        runnable_config = agent_config.get_tracker().inject_runnable_config(RunnableConfig(
             metadata={
                 "bot_id": "agentic-bot",
                 "channel_id": "streamlit-web",
@@ -60,14 +69,16 @@ if message := st.chat_input(config.slack.get_message("assistant_greeting").text)
             },
             tags=["streamlit", "message"],
             run_id=message_id,
+            callbacks=[StreamlitCallbackHandler(thinking_placeholder)]
         ))
         result = graph.invoke(
             {"messages": [HumanMessage(content=message)]}, config=runnable_config)
         logger.debug("invoke", result=result, runnable_config=runnable_config)
-        content, references = parse_agent_result(config, result)
+        content, references = parse_agent_result(agent_config, result)
+        thinking_placeholder.empty()
         st.write_stream(simulate_stream(content))
         for reference in references:
-            with st.expander(f"📚 **{reference.name}**"):
+            with st.expander(f"{reference.icon_emoji} **{reference.title}**\n\n`#{reference.source}`"):
                 st.markdown("\n\n".join(
                     [f"[{artifact.title}]({artifact.link})" for artifact in reference.artifacts]))
 

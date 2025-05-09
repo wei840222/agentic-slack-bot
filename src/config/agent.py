@@ -12,6 +12,7 @@ from langgraph.checkpoint.mongodb import MongoDBSaver
 
 from tracking import BaseTracker, LangfuseTracker, StdoutTracker
 from .prompt import Prompt, PromptConfig
+from .message import EmojiConfig, MessageConfig
 from .client import LangfuseConfig
 
 _checkpointer: Optional[Checkpointer] = None
@@ -44,6 +45,8 @@ class AgentConfig(BaseSettings):
 
     _langfuse_config: LangfuseConfig = None
     _prompt_config: PromptConfig = None
+    _messages: MessageConfig = None
+    _emojis: EmojiConfig = None
 
     prompt_provider: PromptProvider = Field(
         default=PromptProvider.YAML,
@@ -120,6 +123,16 @@ class AgentConfig(BaseSettings):
             case _:
                 raise ValueError(
                     f"Invalid prompt provider: {self.prompt_provider}")
+
+    def get_message(self, name: str) -> str:
+        if self._messages is None:
+            self._messages = MessageConfig()
+        return self._messages[name]
+
+    def get_emoji(self, name: str) -> str:
+        if self._emojis is None:
+            self._emojis = EmojiConfig()
+        return self._emojis[name]
 
     def get_checkpointer(self, async_mongodb: bool = True) -> Checkpointer:
         global _checkpointer

@@ -1,8 +1,7 @@
 import json
 import asyncio
 import logging
-from collections import OrderedDict
-from typing import Dict, Any, Optional, Tuple, List
+from typing import Dict, Any, Optional
 
 from slack_bolt.app.async_app import AsyncApp, AsyncAssistant
 from slack_bolt.context.ack.async_ack import AsyncAck
@@ -10,12 +9,12 @@ from slack_bolt.context.say.async_say import AsyncSay
 from slack_bolt.context.set_suggested_prompts.async_set_suggested_prompts import AsyncSetSuggestedPrompts
 from slack_bolt.context.set_status.async_set_status import AsyncSetStatus
 from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
-from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
+from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 
 from config import BaseConfig
-from agent import create_check_new_conversation_chain, create_supervisor_graph
-from .client import SlackEvent, SlackEventType, SlackAsyncClient, SlackMessageReference, SlackMessageReferenceArtifact
+from agent import create_check_new_conversation_chain, create_supervisor_graph, parse_agent_result
+from .client import SlackEvent, SlackEventType, SlackAsyncClient
 
 
 class SlackBot:
@@ -89,11 +88,9 @@ class SlackBot:
                               slack_body=json.dumps(body, ensure_ascii=False))
 
     async def _handle_thread_started(self, say: AsyncSay, set_suggested_prompts: AsyncSetSuggestedPrompts):
-        await say(self.config.get_message("assistant_greeting").text)
-        prompts = [{
-            "title": self.config.get_message(f"assistant_greeting_prompt_{i}_title").text,
-            "message": self.config.get_message(f"assistant_greeting_prompt_{i}_message").text
-        } for i in range(1, 4)]
+        await say(self.config.messages["assistant_greeting"])
+        prompts = self.config.messages.get_message_dicts(
+            "assistant_greeting_prompt")
         await set_suggested_prompts(prompts=prompts)
 
     async def _handle_assistant_message(self, body: Dict[str, Any], set_status: AsyncSetStatus, ack: AsyncAck) -> None:
@@ -103,7 +100,7 @@ class SlackBot:
             event = SlackEvent(type=SlackEventType.MESSAGE, data=body["event"], user=body["event"]
                                ["user"], channel=body["event"]["channel"], message_id=body["event"]["client_msg_id"])
             await self.event_queue.put(event)
-            await set_status(self.config.get_message("assistant_thinking").text)
+            await set_status(self.config.messages["assistant_thinking"])
         await ack()
 
     async def _handle_message(self, body: Dict[str, Any], ack: AsyncAck) -> None:
@@ -113,7 +110,7 @@ class SlackBot:
             event = SlackEvent(type=SlackEventType.MESSAGE, data=body["event"], user=body["event"]
                                ["user"], channel=body["event"]["channel"], message_id=body["event"]["client_msg_id"])
             await self.event_queue.put(event)
-            await self.client.add_reaction(event, self.config.get_emoji("ai_thinking").emoji)
+            await self.client.add_reaction(event, self.config.emojis["ai_thinking"])
         await ack()
 
     async def _handle_app_mention(self, body: Dict[str, Any], ack: AsyncAck) -> None:
@@ -123,7 +120,7 @@ class SlackBot:
             event = SlackEvent(type=SlackEventType.APP_MENTION, data=body["event"], user=body["event"]
                                ["user"], channel=body["event"]["channel"], message_id=body["event"]["client_msg_id"])
             await self.event_queue.put(event)
-            await self.client.add_reaction(event, self.config.get_emoji("ai_thinking").emoji)
+            await self.client.add_reaction(event, self.config.emojis["ai_thinking"])
         await ack()
 
     async def _handle_reaction_added(self, body: Dict[str, Any], ack: AsyncAck) -> None:
@@ -149,15 +146,15 @@ class SlackBot:
                 config=runnable_config,
             )
             if is_new_conversation.strip().lower() == "yes":
-                await self.client.remove_reaction(event, self.config.get_emoji("ai_thinking").emoji)
+                await self.client.remove_reaction(event, self.config.emojis["ai_thinking"])
                 event.session_id = None
-                await self.client.reply_blocks(event, self.config.get_message("new_conversation_title").text, [
+                await self.client.reply_blocks(event, self.config.messages["new_conversation_title"], [
                     {
                         "type": "context",
                         "elements": [
                             {
                                 "type": "plain_text",
-                                "text": self.config.get_message("new_conversation_message").text,
+                                "text": self.config.messages["new_conversation_message"],
                                 "emoji": True
                             }
                         ]
@@ -175,9 +172,10 @@ class SlackBot:
         self.logger.debug("agent_result", agent_result=agent_result)
 
         if not self.config.assistant:
-            await self.client.remove_reaction(event, self.config.get_emoji("ai_thinking").emoji)
+            await self.client.remove_reaction(event, self.config.emojis["ai_thinking"])
 
-        content, references = self.parse_agent_result(agent_result)
+        content, references = parse_agent_result(
+            self.agent_config, agent_result)
         await self.client.reply_markdown(event, content, references, in_replies=self.config.assistant)
 
     async def _process_app_mention_event(self, event: SlackEvent) -> None:
@@ -198,8 +196,9 @@ class SlackBot:
         )
         self.logger.debug("agent_result", agent_result=agent_result)
 
-        content, references = self.parse_agent_result(agent_result)
-        await self.client.remove_reaction(event, self.config.get_emoji("ai_thinking").emoji)
+        content, references = parse_agent_result(
+            self.agent_config, agent_result)
+        await self.client.remove_reaction(event, self.config.emojis["ai_thinking"])
         await self.client.reply_markdown(event, content, references, in_replies=True)
 
     async def _process_reaction_added_event(self, event: SlackEvent) -> None:
@@ -236,55 +235,3 @@ class SlackBot:
             tags=["slack", event.type.value],
             run_id=event.message_id,
         )
-
-    def parse_agent_result(self, result: Dict[str, Any]) -> Tuple[str, List[SlackMessageReference]]:
-        content: str | list[str | dict] = result["messages"][-1].content
-
-        if isinstance(content, list):
-            text_item = []
-            for result_item in result:
-                match result_item:
-                    case str():
-                        if result_item.strip() == "":
-                            continue
-                        text_item.append(result_item)
-                    case _:
-                        self.logger.warning("unknown result item type", result_item=json.dumps(
-                            result_item, ensure_ascii=False))
-            if len(text_item) <= 0:
-                text_item.append("...")
-            content = "\n".join(text_item)
-        content = content.strip()
-
-        references = OrderedDict()
-        dedupe_artifact = set()
-        for message in result["messages"][::-1]:
-            if isinstance(message, HumanMessage):
-                break
-            if not isinstance(message, ToolMessage):
-                continue
-            if isinstance(message.artifact, list) and len(message.artifact) > 0:
-                if message.name not in references:
-                    references[message.name] = []
-                reference = SlackMessageReference(name=self.config.get_message(
-                    "tool_artifact_title").text, icon_emoji=self.config.get_emoji(f"{message.name}_tool_artifact_icon").emoji, artifacts=[])
-                for artifact in message.artifact:
-                    if not isinstance(artifact["title"], str) or not isinstance(artifact["link"], str):
-                        continue
-                    key = f"{message.name.strip()}: [{artifact['title'].strip()}]({artifact['link'].strip()})"
-                    if key in dedupe_artifact:
-                        continue
-                    dedupe_artifact.add(key)
-                    reference.artifacts.append(SlackMessageReferenceArtifact(
-                        title=artifact["title"].strip(), link=artifact["link"].strip()))
-                if len(reference.artifacts) > 0:
-                    references[message.name].append(reference)
-
-        references = list(references.values())
-        references_list = []
-        for reference in references:
-            references_list.extend(reference)
-        references = references_list
-        references.reverse()
-
-        return content, references

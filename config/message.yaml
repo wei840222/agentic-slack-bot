@@ -1,10 +1,11 @@
 emojis:
   - name: ai_thinking
     emoji: ":loading:"
+
   - name: google_search_tool_artifact_icon
-    emoji: ":google:"
+    emoji: 🌏
   - name: markitdown_crawler_tool_artifact_icon
-    emoji: ":earth_asia:"
+    emoji: 📑
 
 messages:
   - name: content_disclaimer_message
