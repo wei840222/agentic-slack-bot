@@ -12,7 +12,7 @@ case "$@" in
     ;;
 
     "web")
-        streamlit run ./src/streamlit_web/app.py
+        streamlit run ./src/streamlit_web/👋_Hello.py
     ;;
 
    *)

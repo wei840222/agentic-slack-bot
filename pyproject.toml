@@ -17,6 +17,7 @@ dependencies = [
     "langmem>=0.0.25",
     "markitdown>=0.1.1",
     "mcp>=1.6.0",
+    "plotly>=6.0.1",
     "pydantic-settings>=2.9.1",
     "pydantic-settings-yaml>=0.2.0",
     "pymongo>=4.11.3",
