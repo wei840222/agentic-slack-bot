@@ -1,10 +1,12 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .message import EmojiConfig, MessageConfig
+from .logger import LoggerMixin
+from .prompt import PromptMixin
+from .message import EmojiMixin, MessageMixin
 
 
-class SlackConfig(BaseSettings):
+class SlackConfig(BaseSettings, LoggerMixin, PromptMixin, EmojiMixin, MessageMixin):
     model_config = SettingsConfigDict(
         env_prefix="SLACK_",
         env_file=".env",
@@ -16,6 +18,3 @@ class SlackConfig(BaseSettings):
     bot_token: str
     bot_id: str
     assistant: bool = False
-
-    emojis: EmojiConfig = Field(default_factory=EmojiConfig)
-    messages: MessageConfig = Field(default_factory=MessageConfig)

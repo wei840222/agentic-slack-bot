@@ -9,12 +9,12 @@ from langgraph.graph.message import REMOVE_ALL_MESSAGES
 from langgraph.prebuilt.chat_agent_executor import AgentState
 from langgraph.prebuilt import create_react_agent
 
-from config import AgentConfig, LoggerConfig
+from config import AgentConfig
 from .tool import create_google_search_tool, create_markitdown_crawler_tool
 
 
 def create_agent(agent_config: AgentConfig) -> Runnable:
-    logger = LoggerConfig().get_logger()
+    logger = agent_config.get_logger()
     provider, model = agent_config.model.split("/", maxsplit=1)
 
     model = init_chat_model(model, model_provider=provider,

@@ -17,10 +17,20 @@ class LoggerConfig(BaseSettings):
 
     level: str = "INFO"
 
-    def get_logger(self) -> logging.Logger:
+    @property
+    def logger(self) -> logging.Logger:
         global _logger
         if _logger is None:
             structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(
                 getattr(logging, self.level.upper())))
             _logger = structlog.stdlib.get_logger()
         return _logger
+
+
+class LoggerMixin:
+    _logger_config: Optional[LoggerConfig] = None
+
+    def get_logger(self) -> logging.Logger:
+        if self._logger_config is None:
+            self._logger_config = LoggerConfig()
+        return self._logger_config.logger

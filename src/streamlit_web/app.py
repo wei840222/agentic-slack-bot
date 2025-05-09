@@ -5,25 +5,24 @@ from langchain.schema.runnable.config import RunnableConfig
 from langchain_core.messages import HumanMessage
 from langchain.callbacks.streamlit import StreamlitCallbackHandler
 
-from config import BaseConfig
+
 from agent import create_supervisor_graph, parse_agent_result
+from config import get_config, AgentConfig
+
+logger = get_config().get_logger()
 
 
 @st.cache_resource
-def get_config():
-    config = BaseConfig()
-    config.agent.checkpointer_mongodb_async = False
-    config.logger.get_logger().debug("config loaded", config=config)
-    return config
+def get_agent_config() -> AgentConfig:
+    config = get_config()
+    config.agent_config.checkpointer_mongodb_async = False
+    logger.debug("config loaded", config=config)
+    return config.agent_config
 
 
 @st.cache_resource
 def get_graph():
-    return create_supervisor_graph(get_config().agent)
-
-
-logger = get_config().logger.get_logger()
-agent_config = get_config().agent
+    return create_supervisor_graph(get_agent_config())
 
 
 def simulate_stream(message: str):
@@ -47,7 +46,7 @@ for message in st.session_state["messages"]:
                     st.markdown("\n\n".join(
                         [f"[{artifact.title}]({artifact.link})" for artifact in reference.artifacts]))
 
-if message := st.chat_input(agent_config.get_message("assistant_greeting")):
+if message := st.chat_input(get_agent_config().get_message("assistant_greeting")):
     with st.chat_message("user"):
         st.markdown(message)
         st.session_state.messages.append({"role": "user", "content": message})
@@ -56,7 +55,7 @@ if message := st.chat_input(agent_config.get_message("assistant_greeting")):
         graph = get_graph()
         message_id = str(uuid.uuid4())
         thinking_placeholder = st.empty()
-        runnable_config = agent_config.get_tracker().inject_runnable_config(RunnableConfig(
+        runnable_config = get_agent_config().get_tracker().inject_runnable_config(RunnableConfig(
             metadata={
                 "bot_id": "agentic-bot",
                 "channel_id": "streamlit-web",
@@ -74,7 +73,7 @@ if message := st.chat_input(agent_config.get_message("assistant_greeting")):
         result = graph.invoke(
             {"messages": [HumanMessage(content=message)]}, config=runnable_config)
         logger.debug("invoke", result=result, runnable_config=runnable_config)
-        content, references = parse_agent_result(agent_config, result)
+        content, references = parse_agent_result(get_agent_config(), result)
         thinking_placeholder.empty()
         st.write_stream(simulate_stream(content))
         for reference in references:

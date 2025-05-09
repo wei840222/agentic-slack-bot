@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from langfuse import Langfuse
 from langfuse.callback import CallbackHandler
+from .logger import LoggerMixin
 
 
 _httpx_client: Optional[httpx.Client] = None
@@ -11,7 +12,7 @@ _langfuse_client: Optional[Langfuse] = None
 _langfuse_callback_handler: Optional[CallbackHandler] = None
 
 
-class LangfuseConfig(BaseSettings):
+class LangfuseConfig(BaseSettings, LoggerMixin):
     model_config = SettingsConfigDict(
         env_prefix="LANGFUSE_",
         env_file=".env",

@@ -11,17 +11,12 @@ from langgraph.checkpoint.mongodb.aio import AsyncMongoDBSaver
 from langgraph.checkpoint.mongodb import MongoDBSaver
 
 from tracking import BaseTracker, LangfuseTracker, StdoutTracker
-from .prompt import Prompt, PromptConfig
-from .message import EmojiConfig, MessageConfig
-from .client import LangfuseConfig
+from .logger import LoggerMixin
+from .prompt import PromptMixin
+from .message import EmojiMixin, MessageMixin
 
 _checkpointer: Optional[Checkpointer] = None
 _tracker: Optional[BaseTracker] = None
-
-
-class PromptProvider(Enum):
-    YAML = "yaml"
-    LANGFUSE = "langfuse"
 
 
 class CheckpointerProvider(Enum):
@@ -35,22 +30,12 @@ class TrackingProvider(Enum):
     NONE = "none"
 
 
-class AgentConfig(BaseSettings):
+class AgentConfig(BaseSettings, LoggerMixin, PromptMixin, EmojiMixin, MessageMixin):
     model_config = SettingsConfigDict(
         env_prefix="AGENT_",
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
-    )
-
-    _langfuse_config: LangfuseConfig = None
-    _prompt_config: PromptConfig = None
-    _messages: MessageConfig = None
-    _emojis: EmojiConfig = None
-
-    prompt_provider: PromptProvider = Field(
-        default=PromptProvider.YAML,
-        description="The provider to use for the agent's prompts."
     )
 
     checkpointer_provider: CheckpointerProvider = Field(
@@ -99,40 +84,6 @@ class AgentConfig(BaseSettings):
         config = ensure_config(config)
         configurable = config.get("configurable") or {}
         return cls(**{k: v for k, v in configurable.items() if k in cls.model_fields})
-
-    def _get_langfuse_config(self) -> LangfuseConfig:
-        if self._langfuse_config is None:
-            self._langfuse_config = LangfuseConfig()
-        return self._langfuse_config
-
-    def get_prompt(self, name: str) -> Prompt:
-        match self.prompt_provider:
-            case PromptProvider.YAML:
-                if self._prompt_config is None:
-                    self._prompt_config = PromptConfig()
-                return self._prompt_config.get_prompt(name)
-            case PromptProvider.LANGFUSE:
-                client = self._get_langfuse_config().get_langfuse_client()
-                langfuse_prompt = client.get_prompt(
-                    name, label=client.environment)
-                return Prompt(
-                    name=langfuse_prompt.name,
-                    text=langfuse_prompt.get_langchain_prompt(),
-                    metadata=langfuse_prompt.config
-                )
-            case _:
-                raise ValueError(
-                    f"Invalid prompt provider: {self.prompt_provider}")
-
-    def get_message(self, name: str) -> str:
-        if self._messages is None:
-            self._messages = MessageConfig()
-        return self._messages[name]
-
-    def get_emoji(self, name: str) -> str:
-        if self._emojis is None:
-            self._emojis = EmojiConfig()
-        return self._emojis[name]
 
     def get_checkpointer(self, async_mongodb: bool = True) -> Checkpointer:
         global _checkpointer

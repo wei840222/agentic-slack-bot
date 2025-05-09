@@ -2,12 +2,12 @@ import asyncio
 import signal
 
 
-from config import BaseConfig
+from config import get_config
 from .bot import SlackBot
 
 
-config = BaseConfig()
-logger = config.logger.get_logger()
+config = get_config()
+logger = config.get_logger()
 logger.debug("config loaded", config=config)
 
 

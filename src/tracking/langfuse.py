@@ -2,7 +2,6 @@ from enum import Enum
 from langchain_core.runnables import RunnableConfig
 from langfuse.client import DatasetStatus
 
-from config.logger import LoggerConfig
 from config.client import LangfuseConfig
 from .base import BaseTracker
 
@@ -19,7 +18,7 @@ class LangfuseDataset(Enum):
 
 class LangfuseTracker(BaseTracker):
     def __init__(self, config: LangfuseConfig):
-        self.logger = LoggerConfig().get_logger()
+        self.logger = config.get_logger()
         self.langfuse = config.get_langfuse_client()
         self.langfuse_callback_handler = config.get_langfuse_callback_handler()
 

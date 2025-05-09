@@ -6,8 +6,8 @@ from .base import BaseTracker
 
 
 class StdoutTracker(BaseTracker):
-    def __init__(self):
-        self.logger = LoggerConfig().get_logger()
+    def __init__(self, config: LoggerConfig):
+        self.logger = config.logger
 
     def inject_runnable_config(self, config: RunnableConfig) -> RunnableConfig:
         config = super().inject_runnable_config(config)

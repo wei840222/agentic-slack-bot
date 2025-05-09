@@ -1,6 +1,6 @@
 import re
 from collections import defaultdict
-from typing import List, Dict
+from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
 from pydantic_settings import SettingsConfigDict
 from pydantic_settings_yaml import YamlBaseSettings
@@ -27,6 +27,15 @@ class EmojiConfig(YamlBaseSettings):
         raise ValueError(f"Emoji with name {key} not found")
 
 
+class EmojiMixin:
+    _emoji_config: Optional[EmojiConfig] = None
+
+    def get_emoji(self, name: str) -> str:
+        if self._emoji_config is None:
+            self._emoji_config = EmojiConfig()
+        return self._emoji_config[name]
+
+
 class Message(BaseModel):
     name: str
     text: str
@@ -47,10 +56,22 @@ class MessageConfig(YamlBaseSettings):
                 return message.text
         raise ValueError(f"Message with name {key} not found")
 
-    def get_message_dicts(self, key: str) -> List[Dict[str, str]]:
-        pattern = re.compile(f"^{key}_(\\d+)_(.+)$")
+
+class MessageMixin:
+    _message_config: Optional[MessageConfig] = None
+
+    def get_message(self, name: str) -> str:
+        if self._message_config is None:
+            self._message_config = MessageConfig()
+        return self._message_config[name]
+
+    def get_message_dicts(self, prefix: str) -> List[Dict[str, str]]:
+        if self._message_config is None:
+            self._message_config = MessageConfig()
+
+        pattern = re.compile(f"^{prefix}_(\\d+)_(.+)$")
         message_dicts = defaultdict(dict)
-        for message in self.messages:
+        for message in self._message_config.messages:
             if not pattern.fullmatch(message.name):
                 continue
             idx, key = pattern.findall(message.name)[0]

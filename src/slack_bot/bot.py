@@ -19,9 +19,9 @@ from .client import SlackEvent, SlackEventType, SlackAsyncClient
 
 class SlackBot:
     def __init__(self, config: BaseConfig, logger: Optional[logging.Logger] = None):
-        self.logger = logger or config.logger.get_logger()
-        self.config = config.slack
-        self.agent_config = config.agent
+        self.logger = logger or config.get_logger()
+        self.config = config.slack_config
+        self.agent_config = config.agent_config
         self.app = AsyncApp(token=self.config.bot_token)
         self.client = SlackAsyncClient(self.config, self.app.client, logger)
         self.handler = AsyncSocketModeHandler(self.app, self.config.app_token)
@@ -88,9 +88,8 @@ class SlackBot:
                               slack_body=json.dumps(body, ensure_ascii=False))
 
     async def _handle_thread_started(self, say: AsyncSay, set_suggested_prompts: AsyncSetSuggestedPrompts):
-        await say(self.config.messages["assistant_greeting"])
-        prompts = self.config.messages.get_message_dicts(
-            "assistant_greeting_prompt")
+        await say(self.config.get_message("assistant_greeting"))
+        prompts = self.config.get_message_dicts("assistant_greeting_prompt")
         await set_suggested_prompts(prompts=prompts)
 
     async def _handle_assistant_message(self, body: Dict[str, Any], set_status: AsyncSetStatus, ack: AsyncAck) -> None:
@@ -100,7 +99,7 @@ class SlackBot:
             event = SlackEvent(type=SlackEventType.MESSAGE, data=body["event"], user=body["event"]
                                ["user"], channel=body["event"]["channel"], message_id=body["event"]["client_msg_id"])
             await self.event_queue.put(event)
-            await set_status(self.config.messages["assistant_thinking"])
+            await set_status(self.config.get_message("assistant_thinking"))
         await ack()
 
     async def _handle_message(self, body: Dict[str, Any], ack: AsyncAck) -> None:
@@ -110,7 +109,7 @@ class SlackBot:
             event = SlackEvent(type=SlackEventType.MESSAGE, data=body["event"], user=body["event"]
                                ["user"], channel=body["event"]["channel"], message_id=body["event"]["client_msg_id"])
             await self.event_queue.put(event)
-            await self.client.add_reaction(event, self.config.emojis["ai_thinking"])
+            await self.client.add_reaction(event, self.config.get_emoji("ai_thinking"))
         await ack()
 
     async def _handle_app_mention(self, body: Dict[str, Any], ack: AsyncAck) -> None:
@@ -120,7 +119,7 @@ class SlackBot:
             event = SlackEvent(type=SlackEventType.APP_MENTION, data=body["event"], user=body["event"]
                                ["user"], channel=body["event"]["channel"], message_id=body["event"]["client_msg_id"])
             await self.event_queue.put(event)
-            await self.client.add_reaction(event, self.config.emojis["ai_thinking"])
+            await self.client.add_reaction(event, self.config.get_emoji("ai_thinking"))
         await ack()
 
     async def _handle_reaction_added(self, body: Dict[str, Any], ack: AsyncAck) -> None:
@@ -146,15 +145,15 @@ class SlackBot:
                 config=runnable_config,
             )
             if is_new_conversation.strip().lower() == "yes":
-                await self.client.remove_reaction(event, self.config.emojis["ai_thinking"])
+                await self.client.remove_reaction(event, self.config.get_emoji("ai_thinking"))
                 event.session_id = None
-                await self.client.reply_blocks(event, self.config.messages["new_conversation_title"], [
+                await self.client.reply_blocks(event, self.config.get_message("new_conversation_title"), [
                     {
                         "type": "context",
                         "elements": [
                             {
                                 "type": "plain_text",
-                                "text": self.config.messages["new_conversation_message"],
+                                "text": self.config.get_message("new_conversation_message"),
                                 "emoji": True
                             }
                         ]
@@ -172,7 +171,7 @@ class SlackBot:
         self.logger.debug("agent_result", agent_result=agent_result)
 
         if not self.config.assistant:
-            await self.client.remove_reaction(event, self.config.emojis["ai_thinking"])
+            await self.client.remove_reaction(event, self.config.get_emoji("ai_thinking"))
 
         content, references = parse_agent_result(
             self.agent_config, agent_result)
@@ -198,7 +197,7 @@ class SlackBot:
 
         content, references = parse_agent_result(
             self.agent_config, agent_result)
-        await self.client.remove_reaction(event, self.config.emojis["ai_thinking"])
+        await self.client.remove_reaction(event, self.config.get_emoji("ai_thinking"))
         await self.client.reply_markdown(event, content, references, in_replies=True)
 
     async def _process_reaction_added_event(self, event: SlackEvent) -> None:
