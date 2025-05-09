@@ -7,6 +7,12 @@ from langchain.tools import BaseTool
 from agent.tool import create_google_search_tool, create_markitdown_crawler_tool, Artifact
 from config import AgentConfig
 
+st.set_page_config(
+    page_title="Custom Google Search",
+    page_icon="🌏",
+    layout="wide",
+)
+
 
 @st.cache_resource
 def get_agent_config() -> AgentConfig:

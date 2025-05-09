@@ -3,6 +3,12 @@ import pandas as pd
 import plotly.express as px
 from emoji_sentiment import EmojiSentiment
 
+st.set_page_config(
+    page_title="Emoji Sentiment",
+    page_icon="😀",
+    layout="wide",
+)
+
 
 @st.cache_data
 def get_emoji_sentiment():

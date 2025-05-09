@@ -9,6 +9,12 @@ from langchain.callbacks.streamlit import StreamlitCallbackHandler
 from agent import create_supervisor_graph, parse_agent_result
 from config import AgentConfig
 
+st.set_page_config(
+    page_title="Agentic Chatbot",
+    page_icon="🤖",
+    layout="wide",
+)
+
 
 @st.cache_resource
 def get_agent_config() -> AgentConfig:

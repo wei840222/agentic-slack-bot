@@ -6,6 +6,12 @@ from langchain.tools import BaseTool
 from agent.tool import create_markitdown_crawler_tool
 from config import AgentConfig
 
+st.set_page_config(
+    page_title="Markitdown Crawler",
+    page_icon="🕷️",
+    layout="wide",
+)
+
 
 @st.cache_resource
 def get_agent_config() -> AgentConfig:
