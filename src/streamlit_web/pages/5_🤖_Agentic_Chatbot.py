@@ -72,7 +72,7 @@ if message := st.chat_input(placeholder=get_agent_config().get_message("assistan
 st.sidebar.header("Example Prompts")
 for idx, prompt in enumerate(get_agent_config().get_message_dicts("assistant_greeting_prompt")):
     st.sidebar.button(
-        prompt["title"], key=idx, icon="📜", type="tertiary", help=ensure_new_line(prompt["message"]), on_click=lambda message=prompt["message"]: handle_chat_input(message, rerun=False), disabled=st.session_state["is_thinking"])
+        prompt["title"], key=idx, icon=prompt["icon"], type="tertiary", help=ensure_new_line(prompt["message"]), on_click=lambda message=prompt["message"]: handle_chat_input(message, rerun=False), disabled=st.session_state["is_thinking"])
 
 if st.session_state["is_thinking"] and st.session_state["messages"][-1]["role"] == "user":
     with st.chat_message("assistant"):

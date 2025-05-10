@@ -28,26 +28,36 @@ messages:
 
   - name: assistant_greeting_prompt_0_title
     text: 打招呼
+  - name: assistant_greeting_prompt_0_icon
+    text: 🤗
   - name: assistant_greeting_prompt_0_message
     text: 我今天過得很好，現在幾點?
 
   - name: assistant_greeting_prompt_1_title
     text: 找餐廳
+  - name: assistant_greeting_prompt_1_icon
+    text: 🍴
   - name: assistant_greeting_prompt_1_message
     text: 幫我找台北市好吃的燒烤餐廳，1000元以內。
 
   - name: assistant_greeting_prompt_2_title
     text: 解數學問題
+  - name: assistant_greeting_prompt_2_icon
+    text: 📚
   - name: assistant_greeting_prompt_2_message
     text: 請幫我解這個微積分問題：求函數 f(x) = x^2 * sin(x) 在區間 [0, π] 上的定積分。
 
   - name: assistant_greeting_prompt_3_title
     text: 開發演算法
+  - name: assistant_greeting_prompt_3_icon
+    text: 💻
   - name: assistant_greeting_prompt_3_message
     text: 提供給我 Python 快速排序程式碼範例。
 
   - name: assistant_greeting_prompt_4_title
     text: 分析天氣趨勢
+  - name: assistant_greeting_prompt_4_icon
+    text: 🌤️
   - name: assistant_greeting_prompt_4_message
     text: |
       搜尋 "今天台北天氣"
@@ -58,6 +68,8 @@ messages:
 
   - name: assistant_greeting_prompt_5_title
     text: 個股比較
+  - name: assistant_greeting_prompt_5_icon
+    text: 📈
   - name: assistant_greeting_prompt_5_message
     text: |
       搜尋並比較 "台積電 2330" 和 "聯發科 2454" 的：
