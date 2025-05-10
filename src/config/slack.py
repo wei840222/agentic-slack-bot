@@ -19,5 +19,6 @@ class SlackConfig(BaseSettings, LoggerMixin, PromptMixin, EmojiMixin, MessageMix
     bot_token: str
     bot_id: str
     assistant: bool = False
+    workspace_url: str
 
     agent_config: AgentConfig = Field(default_factory=AgentConfig)

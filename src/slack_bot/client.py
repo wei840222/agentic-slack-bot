@@ -117,13 +117,14 @@ class BaseSlackClient:
         raise ValueError(f"Invalid Slack Thread URL: {url}")
 
     @staticmethod
-    def get_thread_url_info(url: str) -> Tuple[str, float]:
+    def get_thread_url_info(url: str, use_thread_ts: bool = False) -> Tuple[str, float]:
         """
         Extract the channel ID and thread ts from a Slack Thread URL.
-        example: https://xxxx.slack.com/archives/C0000000000/p1741964293697769
+        example: https://xxxx.slack.com/archives/C0000000000/p1741964293697769?thread_ts=1746204212.036359&cid=C08HWC49T9A
 
         Args:
             url: The thread URL to extract the channel ID and thread ts from.
+            use_thread_ts: Whether to use the thread ts from the URL.
 
         Returns:
             A tuple containing the channel ID and thread ts.
@@ -131,8 +132,29 @@ class BaseSlackClient:
         parsed_url = urlparse(url)
         match = re.search(r"/archives/([^/]+)/p(\d+)", parsed_url.path)
         if match:
+            query = parse_qs(parsed_url.query)
+            if use_thread_ts and "thread_ts" in query:
+                return match.group(1), float(query["thread_ts"][0])
             return match.group(1), int(match.group(2)) / 1000000
         raise ValueError(f"Invalid Slack Thread URL: {url}")
+
+    def build_thread_url(self, channel_id: str, ts: float, thread_ts: Optional[float] = None) -> str:
+        """
+        Build a Slack Thread URL.
+        example: https://xxxx.slack.com/archives/C0000000000/p1741964293697769?thread_ts=1746204212.036359&cid=C08HWC49T9A
+
+        Args:
+            channel_id: The channel ID.
+            ts: The timestamp of the message.
+            thread_ts: The timestamp of the thread.
+
+        Returns:
+            The Slack Thread URL.
+        """
+        if thread_ts is None:
+            return f"{self.config.workspace_url}/archives/{channel_id}/p{str(ts).replace('.', '')}"
+        else:
+            return f"{self.config.workspace_url}/archives/{channel_id}/p{str(ts).replace('.', '')}?thread_ts={str(thread_ts)}&cid={channel_id}"
 
 
 class SlackClient(BaseSlackClient):

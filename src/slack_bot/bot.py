@@ -1,4 +1,5 @@
 import json
+import random
 import asyncio
 import logging
 from typing import Dict, Any, Optional
@@ -90,7 +91,8 @@ class SlackBot:
     async def _handle_thread_started(self, say: AsyncSay, set_suggested_prompts: AsyncSetSuggestedPrompts):
         await say(self.config.get_message("assistant_greeting"))
         prompts = self.config.get_message_dicts("assistant_greeting_prompt")
-        await set_suggested_prompts(prompts=prompts)
+        random.shuffle(prompts)
+        await set_suggested_prompts(prompts=[{"title": prompt["title"], "message": prompt["message"]} for prompt in prompts[:4]])
 
     async def _handle_assistant_message(self, body: Dict[str, Any], set_status: AsyncSetStatus, ack: AsyncAck) -> None:
         self.logger.info("got slack assistant message event",
@@ -223,7 +225,7 @@ class SlackBot:
         return RunnableConfig(
             metadata={
                 "bot_id": self.config.bot_id,
-                "channel_id": event.channel,
+                "thread_url": self.client.build_thread_url(event.channel, event.data["ts"], event.data["thread_ts"] if "thread_ts" in event.data else None),
                 "user_id": event.user,
                 "message_id": event.message_id,
                 "session_id": event.session_id,

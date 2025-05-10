@@ -62,13 +62,15 @@ st.write("---")
 col11, col12 = st.columns(2)
 with col11:
     message_url = st.text_input(
-        "Message url", value="https://helenworkspacegroup.slack.com/archives/C08HWC49T9A/p1746204212036359")
+        "Message url", value="https://helenworkspacegroup.slack.com/archives/C08HWC49T9A/p1746351479452869?thread_ts=1746351463.989399&cid=C08HWC49T9A")
 with col12:
     message_limit = st.number_input(
-        "Message number limit", min_value=1, max_value=150, value=1)
+        "Message number limit", min_value=1, max_value=150, value=3)
+use_thread_ts = st.checkbox("Use thread ts", value=True)
 
 if message_url:
-    channel_id, thread_ts = client.get_thread_url_info(message_url)
+    channel_id, thread_ts = client.get_thread_url_info(
+        message_url, use_thread_ts)
     if messages := client.fetch_conversations_replies(channel_id, thread_ts, limit=message_limit):
         st.markdown(f"**Channel ID**")
         st.markdown(f"`{channel_id}`")
