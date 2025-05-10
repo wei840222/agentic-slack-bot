@@ -173,37 +173,29 @@ class SlackClient(BaseSlackClient):
         return result
 
     @backoff.on_exception(backoff.expo, SlackApiError, max_time=60, giveup=slack_api_error_is_not_retryable, logger=LoggerConfig().logger)
-    def fetch_conversations_replies(self, channel: str, thread_ts: str, limit: int = 150) -> List[SlackMessage]:
+    def fetch_conversations_replies(self, channel: str, ts: str, limit: Optional[int] = None) -> List[SlackMessage]:
         self.logger.info("fetching conversations replies",
-                         channel=channel, thread_ts=thread_ts)
+                         channel=channel, ts=ts)
         messages = []
         cursor = None
-
-        page_limit = limit
-        if page_limit > 1000:
-            page_limit = 1000
 
         while True:
             if cursor:
                 response = self.client.conversations_replies(
                     channel=channel,
-                    ts=thread_ts,
-                    inclusive=True,
-                    limit=page_limit,
+                    ts=ts,
+                    limit=200,
                     cursor=cursor,
                     include_all_metadata=True,
                 )
             else:
                 response = self.client.conversations_replies(
                     channel=channel,
-                    ts=thread_ts,
-                    inclusive=True,
-                    limit=page_limit,
+                    ts=ts,
+                    limit=200,
                     include_all_metadata=True,
                 )
             messages.extend(response["messages"])
-            if len(messages) >= limit:
-                break
             if not response.get("has_more"):
                 break
             cursor = response["response_metadata"]["next_cursor"]
@@ -211,6 +203,8 @@ class SlackClient(BaseSlackClient):
         self.logger.debug("slack.client.conversations_replies", slack_thread_replies=json.dumps(
             messages, ensure_ascii=False))
 
+        if limit is not None:
+            return messages[:limit]
         return messages
 
     def find_session_id(self, event: SlackEvent, in_replies: bool = False) -> str:
@@ -218,7 +212,7 @@ class SlackClient(BaseSlackClient):
 
         if in_replies and "thread_ts" in event.data:
             replies = self.fetch_conversations_replies(
-                event.channel, event.data["thread_ts"], 30)
+                event.channel, event.data["thread_ts"])
             if len(replies) > 0:
                 for reply in replies:
                     if "client_msg_id" in reply:
@@ -227,7 +221,7 @@ class SlackClient(BaseSlackClient):
 
         else:
             conversations = self.fetch_conversations_history(
-                event.channel, 1, size=30)
+                event.channel, 1, 30)
             for message in conversations["pages"][0]["messages"]:
                 if "subtype" in message or message["text"].strip() == "":
                     continue
@@ -383,52 +377,45 @@ class SlackAsyncClient(BaseSlackClient):
         return result
 
     @backoff.on_exception(backoff.expo, SlackApiError, max_time=60, giveup=slack_api_error_is_not_retryable, logger=LoggerConfig().logger)
-    async def fetch_conversations_replies(self, channel: str, thread_ts: str, limit: int = 150) -> List[SlackMessage]:
+    async def fetch_conversations_replies(self, channel: str, ts: str, limit: Optional[int] = None) -> List[SlackMessage]:
         self.logger.info("fetching conversations replies",
-                         channel=channel, thread_ts=thread_ts)
+                         channel=channel, ts=ts)
         messages = []
         cursor = None
-
-        page_limit = limit
-        if page_limit > 1000:
-            page_limit = 1000
 
         while True:
             if cursor:
                 response = await self.client.conversations_replies(
                     channel=channel,
-                    ts=thread_ts,
-                    inclusive=True,
-                    limit=page_limit,
+                    ts=ts,
+                    limit=200,
                     cursor=cursor,
                     include_all_metadata=True,
                 )
             else:
                 response = await self.client.conversations_replies(
                     channel=channel,
-                    ts=thread_ts,
-                    inclusive=True,
-                    limit=page_limit,
+                    ts=ts,
+                    limit=200,
                     include_all_metadata=True,
                 )
             messages.extend(response["messages"])
-            if len(messages) >= limit:
-                break
             if not response.get("has_more"):
                 break
             cursor = response["response_metadata"]["next_cursor"]
 
-        self.logger.debug("slack.client.conversations_replies", slack_thread_replies=json.dumps(
+        self.logger.debug("slack.async_client.conversations_replies", slack_thread_replies=json.dumps(
             messages, ensure_ascii=False))
 
+        if limit is not None:
+            return messages[:limit]
         return messages
 
     async def find_session_id(self, event: SlackEvent, in_replies: bool = False) -> str:
         session_id = ""
 
         if in_replies and "thread_ts" in event.data:
-            replies = await self.fetch_conversations_replies(
-                event.channel, event.data["thread_ts"], 30)
+            replies = await self.fetch_conversations_replies(event.channel, event.data["thread_ts"])
             if len(replies) > 0:
                 for reply in replies:
                     if "client_msg_id" in reply:
@@ -436,8 +423,7 @@ class SlackAsyncClient(BaseSlackClient):
                         break
 
         else:
-            conversations = await self.fetch_conversations_history(
-                event.channel, 1, size=30)
+            conversations = await self.fetch_conversations_history(event.channel, 1, 30)
             for message in conversations["pages"][0]["messages"]:
                 if "subtype" in message or message["text"].strip() == "":
                     continue
