@@ -25,15 +25,44 @@ messages:
     text: 正在思考...
   - name: assistant_greeting
     text: 今天過的好嗎?
+
+  - name: assistant_greeting_prompt_0_title
+    text: 打招呼
+  - name: assistant_greeting_prompt_0_message
+    text: 我今天過得很好，現在幾點?
+
   - name: assistant_greeting_prompt_1_title
-    text: 幫我算數學
+    text: 找餐廳
   - name: assistant_greeting_prompt_1_message
-    text: 1+1=?
+    text: 幫我找台北市好吃的燒烤餐廳，1000元以內。
+
   - name: assistant_greeting_prompt_2_title
-    text: 寫一隻程式
+    text: 解數學問題
   - name: assistant_greeting_prompt_2_message
-    text: 幫我用 Python 寫一個插入排序法。
+    text: 請幫我解這個微積分問題：求函數 f(x) = x^2 * sin(x) 在區間 [0, π] 上的定積分。
+
   - name: assistant_greeting_prompt_3_title
-    text: 看看天氣
+    text: 開發演算法
   - name: assistant_greeting_prompt_3_message
-    text: 今天台北的天氣怎麼樣?
+    text: 提供給我 Python 快速排序程式碼範例。
+
+  - name: assistant_greeting_prompt_4_title
+    text: 分析天氣趨勢
+  - name: assistant_greeting_prompt_4_message
+    text: |
+      搜尋 "今天台北天氣"
+      並從搜尋結果中來自 "accuweather.com" 網站的連結裡
+      抓取內容找到可以查詢未來一周台北天氣的連結
+      最後抓取 "每天" 連結網頁內容
+      並提供未來一周台北天氣的摘要
+
+  - name: assistant_greeting_prompt_5_title
+    text: 個股比較
+  - name: assistant_greeting_prompt_5_message
+    text: |
+      搜尋並比較 "台積電 2330" 和 "聯發科 2454" 的：
+      1. 最近一季的財務表現
+      2. 本益比和殖利率
+      3. 技術面指標
+      4. 市場評價
+      最後提供一個以上資訊的摘要

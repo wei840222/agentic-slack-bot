@@ -45,6 +45,7 @@ class SlackMessage(TypedDict):
     attachments: Optional[List[Dict[str, Any]]]
     blocks: Optional[List[Dict[str, Any]]]
     reactions: Optional[List[Dict[str, Any]]]
+    metadata: Optional[Dict[str, Any]]
 
 
 class SlackChannelHistoryPage(TypedDict):

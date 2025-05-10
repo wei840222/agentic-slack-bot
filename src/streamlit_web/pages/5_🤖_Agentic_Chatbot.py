@@ -22,20 +22,29 @@ def get_agent_config() -> AgentConfig:
     return config
 
 
+logger = get_agent_config().get_logger()
+
+
+def ensure_new_line(message: str) -> str:
+    return "\n\n".join(message.strip().split("\n"))
+
+
+def handle_chat_input(message, rerun=True):
+    st.session_state["is_thinking"] = True
+    st.session_state.messages.append(
+        {"role": "user", "content": ensure_new_line(message)})
+    if rerun:
+        st.rerun()
+
+
 def simulate_stream(message: str):
     for char in message:
         yield char
-        time.sleep(0.02)
+        if not char.isspace():
+            time.sleep(0.02)
 
-
-logger = get_agent_config().get_logger()
 
 st.title("Agentic Chatbot 🤖")
-
-st.sidebar.header("Example Prompts")
-for idx, prompt in enumerate(get_agent_config().get_message_dicts("assistant_greeting_prompt")):
-    st.sidebar.markdown(f"**{prompt['title']}**\n\n{prompt['message']}")
-    st.sidebar.write("---")
 
 if "messages" not in st.session_state:
     st.session_state["session_id"] = str(uuid.uuid4())
@@ -57,11 +66,13 @@ for idx, message in enumerate(st.session_state["messages"]):
             st.markdown(f"`{get_agent_config().get_message(
                 "content_disclaimer_message")}`")
 
-
 if message := st.chat_input(placeholder=get_agent_config().get_message("assistant_placeholder"), disabled=st.session_state["is_thinking"]):
-    st.session_state["is_thinking"] = True
-    st.session_state.messages.append({"role": "user", "content": message})
-    st.rerun()
+    handle_chat_input(message)
+
+st.sidebar.header("Example Prompts")
+for idx, prompt in enumerate(get_agent_config().get_message_dicts("assistant_greeting_prompt")):
+    st.sidebar.button(
+        prompt["title"], key=idx, icon="📜", type="tertiary", help=ensure_new_line(prompt["message"]), on_click=lambda message=prompt["message"]: handle_chat_input(message, rerun=False), disabled=st.session_state["is_thinking"])
 
 if st.session_state["is_thinking"] and st.session_state["messages"][-1]["role"] == "user":
     with st.chat_message("assistant"):
