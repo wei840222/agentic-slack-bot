@@ -9,7 +9,7 @@ emojis:
 
 messages:
   - name: content_disclaimer_message
-    text: ":thinking_face: AI 可能會發生錯誤，請查核重要資訊。"
+    text: 🤔 AI 可能會發生錯誤，請查核重要資訊。
   - name: new_conversation_title
     text: 開啟新的對話
   - name: new_conversation_message
@@ -19,6 +19,8 @@ messages:
   - name: ai_reply_too_long_warning_message
     text: 訊息過長，已截斷...
 
+  - name: assistant_placeholder
+    text: 問問 AI，無所不能！
   - name: assistant_thinking
     text: 正在思考...
   - name: assistant_greeting
