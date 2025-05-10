@@ -46,8 +46,7 @@ st.sidebar.markdown(
     "[Markitdown](https://github.com/microsoft/markitdown)")
 
 
-url = st.text_input("Url, e.g., 'https://example.com'",
-                    value="https://example.com")
+url = st.text_input("Url", value="https://example.com")
 
 if url:
     if markdown := get_crawler_results(url):

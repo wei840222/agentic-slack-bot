@@ -3,6 +3,7 @@ import json
 import logging
 import backoff
 from enum import Enum
+from urllib.parse import urlparse, parse_qs
 from typing import Any, Dict, List, TypedDict, Any, List, Dict, Optional, Tuple
 
 from pydantic import BaseModel
@@ -14,28 +15,52 @@ from config import SlackConfig, LoggerConfig
 from agent import Reference
 
 
-class SlackChannelHistory(TypedDict):
-    channel: str
-    pages: List[Dict[str, Any]]
-
-
 class SlackMessage(TypedDict):
-    user: str
     type: str
     subtype: str | None
+
+    user: Optional[str]
+    username: Optional[str]
+    team: Optional[str]
+    bot_id: Optional[str]
+    bot_profile: Optional[Dict[str, Any]]
+    app_id: Optional[str]
+
     ts: str
-    thread_ts: str | None
-    client_msg_id: str
+    thread_ts: Optional[str]
+    edited: Optional[Dict[str, str]]
+
+    client_msg_id: Optional[str]
+    parent_user_id: Optional[str]
+
+    reply_count: Optional[int]
+    reply_users_count: Optional[int]
+    reply_users: Optional[List[str]]
+    latest_reply: Optional[str]
+    subscribed: Optional[bool]
+    is_locked: Optional[bool]
+
     text: str
-    team: str
-    parent_user_id: str
-    blocks: List[Dict[str, Any]]
+    icons: Optional[Dict[str, Any]]
+    attachments: Optional[List[Dict[str, Any]]]
+    blocks: Optional[List[Dict[str, Any]]]
+    reactions: Optional[List[Dict[str, Any]]]
+
+
+class SlackChannelHistoryPage(TypedDict):
+    ok: bool
+    messages: List[SlackMessage]
+    has_more: bool
+    is_limited: bool
+    pin_count: Optional[int]
+    channel_actions_ts: Optional[str]
+    channel_actions_count: Optional[int]
+    response_metadata: Dict[str, Any]
+
+
+class SlackChannelHistory(TypedDict):
     channel: str
-    event_ts: str
-    channel_type: str
-    reply_count: int | None
-    latest_reply: str | None
-    reactions: List[Dict[str, Any]]
+    pages: List[SlackChannelHistoryPage]
 
 
 class SlackEventType(Enum):
@@ -73,6 +98,24 @@ class BaseSlackClient:
         return text
 
     @staticmethod
+    def get_channel_url_info(url: str) -> str:
+        """
+        Extract the channel ID and thread ts from a Slack Thread URL.
+        example: https://xxxx.slack.com/archives/C0000000000
+
+        Args:
+            url: The thread URL to extract the channel ID from.
+
+        Returns:
+            A tuple containing the channel ID.
+        """
+        parsed_url = urlparse(url)
+        match = re.search(r"/archives/([^/]+)", parsed_url.path)
+        if match:
+            return match.group(1)
+        raise ValueError(f"Invalid Slack Thread URL: {url}")
+
+    @staticmethod
     def get_thread_url_info(url: str) -> Tuple[str, float]:
         """
         Extract the channel ID and thread ts from a Slack Thread URL.
@@ -84,7 +127,8 @@ class BaseSlackClient:
         Returns:
             A tuple containing the channel ID and thread ts.
         """
-        match = re.search(r"/archives/([^/]+)/p(\d+)", url)
+        parsed_url = urlparse(url)
+        match = re.search(r"/archives/([^/]+)/p(\d+)", parsed_url.path)
         if match:
             return match.group(1), int(match.group(2)) / 1000000
         raise ValueError(f"Invalid Slack Thread URL: {url}")
