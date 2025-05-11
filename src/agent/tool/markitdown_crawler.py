@@ -1,12 +1,15 @@
 from typing import List, Tuple
 
-from langchain.tools import BaseTool, tool
-import ua_generator
+import urllib3
 import requests
+import ua_generator
 from markitdown import MarkItDown
+from langchain.tools import BaseTool, tool
 
 from config import AgentConfig
 from .types import Artifact
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def create_markitdown_crawler_tool(config: AgentConfig) -> BaseTool:
