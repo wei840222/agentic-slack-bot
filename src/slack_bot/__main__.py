@@ -2,13 +2,15 @@ import asyncio
 import signal
 
 
-from config import SlackConfig
+from config import SlackConfig, AgentConfig
 from .bot import SlackBot
 
 
-config = SlackConfig()
-logger = config.get_logger()
-logger.debug("config loaded", config=config)
+slack_config = SlackConfig()
+agent_config = AgentConfig()
+logger = slack_config.get_logger()
+logger.debug("config loaded", slack_config=slack_config,
+             agent_config=agent_config)
 
 
 def graceful_shutdown(sig: signal.Signals, task_to_cancel: set[asyncio.Task]) -> None:
@@ -24,7 +26,7 @@ async def main() -> None:
     for sig in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(sig, graceful_shutdown, sig, task_to_cancel)
 
-    async with SlackBot(config, logger) as bot:
+    async with SlackBot(slack_config, agent_config, logger) as bot:
         try:
             await bot.run()
         except asyncio.exceptions.CancelledError:

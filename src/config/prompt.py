@@ -5,6 +5,7 @@ from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
 from pydantic_settings import SettingsConfigDict
 from pydantic_settings_yaml import YamlBaseSettings
+from langchain_core.prompts import PromptTemplate
 
 from .client import LangSmithConfig, LangfuseConfig
 
@@ -60,11 +61,6 @@ class PromptMixin:
         return re.sub(r"{{\s*(\w+)\s*}}", r"{\g<1>}", prompt)
 
     def get_prompt(self, name: str) -> Prompt:
-        if self._prompt_config is None:
-            self._prompt_config = PromptConfig()
-        return self._prompt_config[name]
-
-    def get_prompt(self, name: str) -> Prompt:
         match self.prompt_provider:
             case PromptProvider.YAML:
                 if self._prompt_config is None:
@@ -72,11 +68,12 @@ class PromptMixin:
                 return self._transform_prompt(self._prompt_config[name])
             case PromptProvider.LANGSMITH:
                 client = self._get_langsmith_config().get_langsmith_client()
-                langsmith_prompt = client.pull_prompt(
+                langsmith_prompt: PromptTemplate = client.pull_prompt(
                     f"{name}:{self._get_langsmith_config().environment}")
                 return Prompt(
                     name=name,
                     text=self._transform_prompt(langsmith_prompt.template),
+                    metadata=langsmith_prompt.metadata
                 )
             case PromptProvider.LANGFUSE:
                 client = self._get_langfuse_config().get_langfuse_client()

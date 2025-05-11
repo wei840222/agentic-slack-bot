@@ -55,7 +55,7 @@ def create_agent(agent_config: AgentConfig) -> Runnable:
         prompt_template = PromptTemplate.from_template(
             agent_config.get_prompt("system").text)
         system_message = SystemMessage(prompt_template.format(
-            bot_id=config["metadata"]["bot_id"], channel_id=config["metadata"]["channel_id"]))
+            context=config["configurable"]["context"]))
         return [system_message] + state["messages"]
 
     return create_react_agent(

@@ -1,5 +1,6 @@
 import time
 import uuid
+import datetime
 import streamlit as st
 from langchain.schema.runnable.config import RunnableConfig
 from langchain_core.messages import HumanMessage
@@ -81,13 +82,12 @@ if st.session_state["is_thinking"] and st.session_state["messages"][-1]["role"] 
             message_id = str(uuid.uuid4())
             runnable_config = get_agent_config().get_tracker().inject_runnable_config(RunnableConfig(
                 metadata={
-                    "bot_id": "N/A",
-                    "thread_url": "N/A",
-                    "user_id": "N/A",
+                    "user_id": "anonymous",
                     "message_id": message_id,
                     "session_id": st.session_state["session_id"],
                 },
                 configurable={
+                    "context": f"- Current time is {datetime.datetime.now(datetime.timezone.utc).isoformat()}.",
                     "thread_id": st.session_state["session_id"],
                 },
                 tags=["streamlit", "message"],

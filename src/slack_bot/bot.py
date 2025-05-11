@@ -1,6 +1,7 @@
 import json
 import random
 import asyncio
+import datetime
 import logging
 from typing import Dict, Any, Optional
 
@@ -13,16 +14,16 @@ from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 
-from config import SlackConfig
+from config import SlackConfig, AgentConfig
 from agent import create_check_new_conversation_chain, create_supervisor_graph, parse_agent_result
 from .client import SlackEvent, SlackEventType, SlackAsyncClient
 
 
 class SlackBot:
-    def __init__(self, config: SlackConfig, logger: Optional[logging.Logger] = None):
-        self.logger = logger or config.get_logger()
-        self.config = config
-        self.agent_config = config.agent_config
+    def __init__(self, slack_config: SlackConfig, agent_config: AgentConfig, logger: Optional[logging.Logger] = None):
+        self.logger = logger or slack_config.get_logger()
+        self.config = slack_config
+        self.agent_config = agent_config
         self.app = AsyncApp(token=self.config.bot_token)
         self.client = SlackAsyncClient(self.config, self.app.client, logger)
         self.handler = AsyncSocketModeHandler(self.app, self.config.app_token)
@@ -220,15 +221,21 @@ class SlackBot:
                 break
 
     def create_runnable_config(self, event: SlackEvent) -> RunnableConfig:
+        context = f"""
+- Your name is <@{self.config.bot_id}>.
+- You are in {self.client.build_thread_url(event.channel, event.data["ts"], event.data["thread_ts"] if "thread_ts" in event.data else None)} slack conversation thread.
+- User <@{event.user}> is asking you question.
+- Current time is {datetime.datetime.now(datetime.timezone.utc).isoformat()}.
+"""
+
         return RunnableConfig(
             metadata={
-                "bot_id": self.config.bot_id,
-                "thread_url": self.client.build_thread_url(event.channel, event.data["ts"], event.data["thread_ts"] if "thread_ts" in event.data else None),
                 "user_id": event.user,
                 "message_id": event.message_id,
                 "session_id": event.session_id,
             },
             configurable={
+                "context": context.strip(),
                 "thread_id": event.session_id,
             },
             tags=["slack", event.type.value],

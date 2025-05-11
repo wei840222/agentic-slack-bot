@@ -29,7 +29,7 @@ def create_supervisor_graph(agent_config: AgentConfig) -> StateGraph:
         prompt_template = PromptTemplate.from_template(
             agent_config.get_prompt("supervisor_agent_system_prompt").text)
         system_message = SystemMessage(prompt_template.format(
-            bot_id=config["metadata"]["bot_id"], thread_url=config["metadata"]["thread_url"], current_time=datetime.datetime.now(datetime.timezone.utc).isoformat()))
+            context=config["configurable"]["context"]))
         return [system_message] + state["messages"]
 
     supervisor_graph = create_supervisor(
