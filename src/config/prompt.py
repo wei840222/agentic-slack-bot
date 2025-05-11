@@ -65,7 +65,12 @@ class PromptMixin:
             case PromptProvider.YAML:
                 if self._prompt_config is None:
                     self._prompt_config = PromptConfig()
-                return self._transform_prompt(self._prompt_config[name])
+                return Prompt(
+                    name=name,
+                    text=self._transform_prompt(
+                        self._prompt_config[name].text),
+                    metadata=self._prompt_config[name].metadata
+                )
             case PromptProvider.LANGSMITH:
                 client = self._get_langsmith_config().get_langsmith_client()
                 langsmith_prompt: PromptTemplate = client.pull_prompt(

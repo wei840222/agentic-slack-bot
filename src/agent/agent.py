@@ -1,6 +1,6 @@
 from langchain.chat_models import init_chat_model
 from langchain_core.runnables import Runnable
-from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, ToolMessage
+from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages.utils import trim_messages, count_tokens_approximately
@@ -9,11 +9,13 @@ from langgraph.graph.message import REMOVE_ALL_MESSAGES
 from langgraph.prebuilt.chat_agent_executor import AgentState
 from langgraph.prebuilt import create_react_agent
 
-from config import AgentConfig
-from .tool import create_google_search_tool, create_markitdown_crawler_tool
+from config import AgentConfig, SlackConfig
+from .tool import create_google_search_tool, create_markitdown_crawler_tool, create_get_slack_conversation_replies_tool
 
 
 def create_agent(agent_config: AgentConfig) -> Runnable:
+    "prompt_name: system_prompt"
+
     logger = agent_config.get_logger()
     provider, model = agent_config.model.split("/", maxsplit=1)
 
@@ -70,6 +72,8 @@ def create_agent(agent_config: AgentConfig) -> Runnable:
 
 
 def create_web_research_agent(agent_config: AgentConfig) -> Runnable:
+    "prompt_name: web_research_agent_system_prompt"
+
     provider, model = agent_config.model.split("/", maxsplit=1)
 
     model = init_chat_model(model, model_provider=provider,
@@ -83,6 +87,29 @@ def create_web_research_agent(agent_config: AgentConfig) -> Runnable:
 
     return create_react_agent(
         name="web_research_agent",
+        state_schema=AgentState,
+        config_schema=AgentConfig,
+        model=model,
+        tools=tools,
+        prompt=create_system_prompt,
+    )
+
+
+def create_slack_conversation_agent(agent_config: AgentConfig, slack_config: SlackConfig) -> Runnable:
+    "prompt_name: slack_conversation_agent_system_prompt"
+
+    provider, model = agent_config.model.split("/", maxsplit=1)
+
+    model = init_chat_model(model, model_provider=provider,
+                            google_api_key=agent_config.google_api_key)
+
+    tools = [create_get_slack_conversation_replies_tool(slack_config)]
+
+    def create_system_prompt(state: AgentState) -> list[AnyMessage]:
+        return [SystemMessage(agent_config.get_prompt("slack_conversation_agent_system_prompt").text)] + state["messages"]
+
+    return create_react_agent(
+        name="slack_conversation_agent",
         state_schema=AgentState,
         config_schema=AgentConfig,
         model=model,

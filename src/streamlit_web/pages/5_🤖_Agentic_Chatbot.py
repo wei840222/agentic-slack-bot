@@ -5,8 +5,9 @@ import streamlit as st
 from langchain.schema.runnable.config import RunnableConfig
 from langchain_core.messages import HumanMessage
 
-from agent import create_supervisor_graph, parse_agent_result
-from config import AgentConfig
+from agent import create_supervisor_graph
+from agent.parser import parse_agent_result
+from config import AgentConfig, SlackConfig
 
 st.set_page_config(
     page_title="Agentic Chatbot",
@@ -20,6 +21,12 @@ def get_agent_config() -> AgentConfig:
     config = AgentConfig()
     config.checkpointer_mongodb_async = False
     config.get_logger().debug("config loaded", config=config)
+    return config
+
+
+@st.cache_resource
+def get_slack_config() -> SlackConfig:
+    config = SlackConfig()
     return config
 
 
@@ -78,7 +85,8 @@ for idx, prompt in enumerate(get_agent_config().get_message_dicts("assistant_gre
 if st.session_state["is_thinking"] and st.session_state["messages"][-1]["role"] == "user":
     with st.chat_message("assistant"):
         with st.spinner(text=get_agent_config().get_message("assistant_thinking"), show_time=True):
-            graph = create_supervisor_graph(get_agent_config())
+            graph = create_supervisor_graph(
+                get_agent_config(), get_slack_config())
             message_id = str(uuid.uuid4())
             runnable_config = get_agent_config().get_tracker().inject_runnable_config(RunnableConfig(
                 metadata={

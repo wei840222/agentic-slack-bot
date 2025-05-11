@@ -6,6 +6,8 @@ emojis:
     emoji: 🌏
   - name: markitdown_crawler_tool_artifact_icon
     emoji: 📑
+  - name: get_slack_conversation_replies_tool_artifact_icon
+    emoji: 💬
 
 messages:
   - name: content_disclaimer_message
@@ -78,3 +80,12 @@ messages:
       3. 技術面指標
       4. 市場評價
       最後提供一個以上資訊的摘要
+
+  - name: assistant_greeting_prompt_6_title
+    text: 解釋 Slack 訊息
+  - name: assistant_greeting_prompt_6_icon
+    text: 💬
+  - name: assistant_greeting_prompt_6_message
+    text: |
+      https://helenworkspacegroup.slack.com/archives/C03DQ95UCQ4/p1746751656423869
+      這寫甚麼?

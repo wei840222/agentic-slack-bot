@@ -15,8 +15,11 @@ from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 
 from config import SlackConfig, AgentConfig
-from agent import create_check_new_conversation_chain, create_supervisor_graph, parse_agent_result
-from .client import SlackEvent, SlackEventType, SlackAsyncClient
+from agent import create_supervisor_graph
+from agent.parser import parse_agent_result
+from agent.chain import create_check_new_conversation_chain
+from .client import SlackAsyncClient
+from .types import SlackEvent, SlackEventType
 
 
 class SlackBot:
@@ -164,7 +167,7 @@ class SlackBot:
                 ])
                 return
 
-        agent = create_supervisor_graph(self.agent_config)
+        agent = create_supervisor_graph(self.agent_config, self.config)
         agent_result = await agent.ainvoke(
             input={
                 "messages": [HumanMessage(content=event.data["text"])]
@@ -189,7 +192,7 @@ class SlackBot:
             runnable_config = self.tracker.inject_runnable_config(
                 runnable_config)
 
-        agent = create_supervisor_graph(self.agent_config)
+        agent = create_supervisor_graph(self.agent_config, self.config)
         agent_result = await agent.ainvoke(
             input={
                 "messages": [HumanMessage(content=event.data["text"])]
@@ -225,6 +228,7 @@ class SlackBot:
 - Your name is <@{self.config.bot_id}>.
 - You are in {self.client.build_thread_url(event.channel, event.data["ts"], event.data["thread_ts"] if "thread_ts" in event.data else None)} slack conversation thread.
 - User <@{event.user}> is asking you question.
+- Url has `{self.config.workspace_url}` prefix is slack conversation url.
 - Current time is {datetime.datetime.now(datetime.timezone.utc).isoformat()}.
 """
 

@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict
+from typing import List, Tuple
 
 from langchain.tools import BaseTool, tool
 import ua_generator
@@ -12,12 +12,13 @@ from .types import Artifact
 def create_markitdown_crawler_tool(config: AgentConfig) -> BaseTool:
     @tool(response_format="content_and_artifact")
     def markitdown_crawler(url: str) -> Tuple[str, List[Artifact]]:
-        "Scrape a URL to Markdown format."
+        "prompt_name: markitdown_crawler_tool"
 
         user_agent = ua_generator.generate(device="desktop", platform=(
             "windows", "macos"), browser=("chrome", "edge", "firefox", "safari"))
         requests_session = requests.Session()
         requests_session.headers.update(user_agent.headers.get())
+        requests_session.verify = False
         markitdown = MarkItDown(enable_plugins=False,
                                 requests_session=requests_session)
         result = markitdown.convert_url(url)

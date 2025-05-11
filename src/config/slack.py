@@ -1,11 +1,11 @@
-from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .logger import LoggerMixin
+from .prompt import PromptMixin
 from .message import EmojiMixin, MessageMixin
 
 
-class SlackConfig(BaseSettings, LoggerMixin, EmojiMixin, MessageMixin):
+class SlackConfig(BaseSettings, LoggerMixin, PromptMixin, EmojiMixin, MessageMixin):
     model_config = SettingsConfigDict(
         env_prefix="SLACK_",
         env_file=".env",

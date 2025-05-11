@@ -83,7 +83,7 @@ if query:
     if results := get_search_results(query, num_results, crawl):
         for result in results:
             st.markdown(f"[{result['title']}]({result['link']})")
-            st.write(result["summary"])
+            st.write(result["content"])
             if crawl and "markdown" in result:
                 with st.expander("Full Content in Markdown"):
                     st.markdown(result["markdown"])
