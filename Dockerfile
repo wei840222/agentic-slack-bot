@@ -39,6 +39,8 @@ COPY --from=builder --chown=${uid}:${gid} /app /app
 ENV PATH="/app/.venv/bin:$PATH"
 ENV LANGFUSE_RELEASE=${RELEASE:-nightly}
 ENV LANGFUSE_VERSION=${VERSION:-0.0.0}
+ENV LANGSMITH_RELEASE=${RELEASE:-nightly}
+ENV LANGSMITH_VERSION=${VERSION:-0.0.0}
 
 ENTRYPOINT ["./run.sh"]
 CMD ["slack-bot"]

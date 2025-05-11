@@ -10,7 +10,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.checkpoint.mongodb.aio import AsyncMongoDBSaver
 from langgraph.checkpoint.mongodb import MongoDBSaver
 
-from tracking import BaseTracker, LangfuseTracker, StdoutTracker
+from tracking import BaseTracker, StdoutTracker, LangfuseTracker, LangSmithTracker
 from .logger import LoggerMixin
 from .prompt import PromptMixin
 from .message import EmojiMixin, MessageMixin
@@ -25,9 +25,10 @@ class CheckpointerProvider(Enum):
 
 
 class TrackingProvider(Enum):
-    LANGFUSE = "langfuse"
-    STDOUT = "stdout"
     NONE = "none"
+    STDOUT = "stdout"
+    LANGSMITH = "langsmith"
+    LANGFUSE = "langfuse"
 
 
 class AgentConfig(BaseSettings, LoggerMixin, PromptMixin, EmojiMixin, MessageMixin):
@@ -107,12 +108,14 @@ class AgentConfig(BaseSettings, LoggerMixin, PromptMixin, EmojiMixin, MessageMix
         global _tracker
         if _tracker is None:
             match self.tracking_provider:
-                case TrackingProvider.LANGFUSE:
-                    _tracker = LangfuseTracker(self._get_langfuse_config())
-                case TrackingProvider.STDOUT:
-                    _tracker = StdoutTracker()
                 case TrackingProvider.NONE:
                     _tracker = None
+                case TrackingProvider.STDOUT:
+                    _tracker = StdoutTracker()
+                case TrackingProvider.LANGSMITH:
+                    _tracker = LangSmithTracker(self._get_langsmith_config())
+                case TrackingProvider.LANGFUSE:
+                    _tracker = LangfuseTracker(self._get_langfuse_config())
                 case _:
                     raise ValueError(
                         f"Invalid tracking provider: {self.tracking_provider}")

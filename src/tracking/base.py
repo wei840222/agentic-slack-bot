@@ -1,7 +1,18 @@
+from enum import Enum
 from abc import ABC, abstractmethod
 
 from emoji_sentiment import EmojiSentiment
 from langchain_core.runnables import RunnableConfig
+
+
+class Score(Enum):
+    EMOJI_FEEDBACK = "emoji_feedback"
+
+
+class Dataset(Enum):
+    EMOJI_FEEDBACK_POSITIVE = "emoji_feedback_positive"
+    EMOJI_FEEDBACK_NEGATIVE = "emoji_feedback_negative"
+    EMOJI_UNSCORED = "emoji_unscored"
 
 
 class BaseTracker(ABC):
