@@ -73,6 +73,19 @@ class BaseSlackClient:
             return match.group(1), int(match.group(2)) / 1000000
         raise ValueError(f"Invalid Slack Thread URL: {url}")
 
+    def build_channel_url(self, channel_id: str) -> str:
+        """
+        Build a Slack Channel URL.
+        example: https://xxxx.slack.com/archives/C0000000000
+
+        Args:
+            channel_id: The channel ID.
+
+        Returns:
+            The Slack Channel URL.
+        """
+        return f"{self.config.workspace_url}/archives/{channel_id}"
+
     def build_thread_url(self, channel_id: str, ts: float, thread_ts: Optional[float] = None) -> str:
         """
         Build a Slack Thread URL.

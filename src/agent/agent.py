@@ -10,7 +10,7 @@ from langgraph.prebuilt.chat_agent_executor import AgentState
 from langgraph.prebuilt import create_react_agent
 
 from config import AgentConfig, SlackConfig
-from .tool import create_google_search_tool, create_markitdown_crawler_tool, create_get_slack_conversation_replies_tool
+from .tool import create_google_search_tool, create_markitdown_crawler_tool, create_get_slack_conversation_replies_tool, create_get_slack_conversation_history_tool
 
 
 def create_agent(agent_config: AgentConfig) -> Runnable:
@@ -103,7 +103,8 @@ def create_slack_conversation_agent(agent_config: AgentConfig, slack_config: Sla
     model = init_chat_model(model, model_provider=provider,
                             google_api_key=agent_config.google_api_key)
 
-    tools = [create_get_slack_conversation_replies_tool(slack_config)]
+    tools = [create_get_slack_conversation_replies_tool(
+        slack_config), create_get_slack_conversation_history_tool(slack_config)]
 
     def create_system_prompt(state: AgentState) -> list[AnyMessage]:
         return [SystemMessage(agent_config.get_prompt("slack_conversation_agent_system_prompt").text)] + state["messages"]

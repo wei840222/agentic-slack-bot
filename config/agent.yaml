@@ -77,6 +77,14 @@ prompts:
         url: The Slack conversation URL.
         single_message: If the URL contains thread_ts in query params, set to true to get only the specific message rather than all conversation replies.
 
+  - name: get_slack_conversation_history_tool
+    text: |
+      Get history from a given Slack channel URL.
+
+      Args:
+        url: The Slack channel URL.
+        message_count: The number of messages to get.
+
   - name: check_new_conversation
     text: |
       Classify the following input means to start a new conversation.

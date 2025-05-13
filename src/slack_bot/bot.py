@@ -226,9 +226,13 @@ class SlackBot:
     def create_runnable_config(self, event: SlackEvent) -> RunnableConfig:
         context = f"""
 - Your name is <@{self.config.bot_id}>.
-- You are in {self.client.build_thread_url(event.channel, event.data["ts"], event.data["thread_ts"] if "thread_ts" in event.data else None)} slack conversation thread.
 - User <@{event.user}> is asking you question.
-- Url has `{self.config.workspace_url}` prefix is slack conversation url.
+- Url in `{self.config.workspace_url}/archives/(channel_id)` format is slack channel url.
+- Url in `{self.config.workspace_url}/archives/(channel_id)/p(timestamp_in_milliseconds)` format is slack conversation url.
+- Current slack channel url is {self.client.build_channel_url(event.channel)} .
+- Current slack conversation url is {self.client.build_thread_url(event.channel, event.data["ts"], event.data["thread_ts"] if "thread_ts" in event.data else None)} .
+- When user mentions "here", "current conversation", "these people", use slack conversation url to get additional information.
+- When user mentions "this channel", use slack channel url to get additional information.
 - Current time is {datetime.datetime.now(datetime.timezone.utc).isoformat()}.
 """
 
