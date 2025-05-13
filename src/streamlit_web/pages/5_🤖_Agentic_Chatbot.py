@@ -5,7 +5,7 @@ import streamlit as st
 from langchain.schema.runnable.config import RunnableConfig
 from langchain_core.messages import HumanMessage
 
-from agent import create_supervisor_graph
+from agent.supervisor import create_supervisor_graph
 from agent.parser import parse_agent_result
 from config import AgentConfig, SlackConfig
 

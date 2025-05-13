@@ -1,4 +1,5 @@
 from enum import Enum
+import datetime
 from typing import Any, Dict, List, TypedDict, Optional
 
 from pydantic import BaseModel
@@ -35,6 +36,61 @@ class SlackMessage(TypedDict):
     blocks: Optional[List[Dict[str, Any]]]
     reactions: Optional[List[Dict[str, Any]]]
     metadata: Optional[Dict[str, Any]]
+
+
+def attachments_to_text(message: SlackMessage) -> Optional[str]:
+    if message.get("attachments") is None:
+        return None
+
+    contents = []
+    for attachment in message["attachments"]:
+        content = ""
+        for key in ("service_name", "title", "title_link", "text"):
+            if key in attachment:
+                content += f"> {key}: {attachment[key]}\n"
+        contents.append(content.strip())
+
+    if contents:
+        return "\n\n".join(contents)
+
+    return None
+
+
+def reactions_to_text(message: SlackMessage) -> Optional[str]:
+    if message.get("reactions") is None:
+        return None
+
+    contents = []
+    for reaction in message["reactions"]:
+        contents.append(
+            f"> {reaction['name']}: {', '.join([f'<@{user}>' for user in reaction['users']])}")
+
+    if contents:
+        return "\n".join(contents)
+
+    return None
+
+
+def message_to_text(message: SlackMessage) -> Optional[str]:
+    if message["type"] != "message":
+        return None
+
+    content = f"Time:\n{datetime.datetime.fromtimestamp(float(message['ts']), datetime.timezone.utc).isoformat()}\n\n"
+
+    if message.get("subtype", "") == "bot_message":
+        content += f"Post Author:\n{message['username']}\n\n"
+        content += f"Post:\n{message['text']}\n\n"
+    else:
+        content += f"User:\n<@{message['user']}>\n\n"
+        content += f"Message:\n{message['text']}\n\n"
+
+    if attachments := attachments_to_text(message):
+        content += f"Attachments:\n{attachments}\n\n"
+
+    if reactions := reactions_to_text(message):
+        content += f"Reactions:\n{reactions}\n\n"
+
+    return content.strip()
 
 
 class SlackChannelHistoryPage(TypedDict):

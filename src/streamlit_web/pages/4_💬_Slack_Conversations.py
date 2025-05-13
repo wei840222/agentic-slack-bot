@@ -2,6 +2,7 @@ import streamlit as st
 
 from config import SlackConfig
 from slack_bot.client import SlackClient
+from slack_bot.types import message_to_text
 
 st.set_page_config(
     page_title="Slack Conversations",
@@ -33,11 +34,12 @@ st.sidebar.markdown(
 
 client = get_slack_client()
 
+st.subheader("Conversations History")
 
 col1, col2, col3 = st.columns(3)
 with col1:
     channel_url = st.text_input(
-        "Channel url", value="https://helenworkspacegroup.slack.com/archives/C08HWC49T9A")
+        "url", value="https://helenworkspacegroup.slack.com/archives/C08HWC49T9A")
 with col2:
     history_page_size = st.number_input(
         "Page size", min_value=1, max_value=100, value=3)
@@ -51,7 +53,11 @@ if channel_url:
     if historys := client.fetch_conversations_history(channel_id, size=history_page_size, limit=history_limit):
         st.markdown(f"**Channel ID**")
         st.markdown(f"`{channel_id}`")
-        with st.expander("Historys"):
+        with st.expander("Text"):
+            for page in historys["pages"]:
+                for message in page["messages"]:
+                    st.code(message_to_text(message), language="markdown")
+        with st.expander("JSON"):
             st.write(historys)
     else:
         st.markdown("No messages found.")
@@ -59,10 +65,12 @@ if channel_url:
 
 st.write("---")
 
+st.subheader("Conversations Replies")
+
 col11, col12 = st.columns(2)
 with col11:
     message_url = st.text_input(
-        "Message url", value="https://helenworkspacegroup.slack.com/archives/C08HWC49T9A/p1746351479452869?thread_ts=1746351463.989399&cid=C08HWC49T9A")
+        "url", value="https://helenworkspacegroup.slack.com/archives/C08HWC49T9A/p1746351479452869?thread_ts=1746351463.989399&cid=C08HWC49T9A")
 with col12:
     message_limit = st.number_input(
         "Message number limit", min_value=1, max_value=150, value=3)
@@ -76,7 +84,10 @@ if message_url:
         st.markdown(f"`{channel_id}`")
         st.markdown(f"**Thread TS**")
         st.write(thread_ts)
-        with st.expander("Messages"):
+        with st.expander("Text"):
+            for message in messages:
+                st.code(message_to_text(message), language="markdown")
+        with st.expander("JSON"):
             st.write(messages)
     else:
         st.markdown("No messages found.")

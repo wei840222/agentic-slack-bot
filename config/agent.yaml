@@ -27,6 +27,7 @@ prompts:
       - Respond in markdown format.
       - If the task requires multiple steps, break it down and execute them sequentially.
       - Verify the results of the web research agent. Make sure the information comes from the google_search_tool or markitdown_crawler_tool, if not, ask web research agent to do it again.
+      - Verify the results of the slack conversation agent. Make sure the information comes from the get_slack_conversation_replies_tool or get_slack_conversation_history_tool, if not, ask slack conversation agent to do it again.
       - If the information is not found, ask the user to provide more details.
       - Do not mention the information of CONTEXT in your response unless the user asks for it.
       - Do not mention steps or actions you did, just answer the question directly.

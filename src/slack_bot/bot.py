@@ -15,7 +15,7 @@ from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 
 from config import SlackConfig, AgentConfig
-from agent import create_supervisor_graph
+from agent.supervisor import create_supervisor_graph
 from agent.parser import parse_agent_result
 from agent.chain import create_check_new_conversation_chain
 from .client import SlackAsyncClient
