@@ -233,7 +233,7 @@ class SlackBot:
 - Current slack conversation url is {self.client.build_thread_url(event.channel, event.data["ts"], event.data["thread_ts"] if "thread_ts" in event.data else None)} .
 - When user mentions "here", "current conversation", "these people", use slack conversation url to get additional information.
 - When user mentions "this channel", use slack channel url to get additional information.
-- Current time is {datetime.datetime.now(datetime.timezone.utc).isoformat()}.
+- Current time is {datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")}.
 """
 
         return RunnableConfig(

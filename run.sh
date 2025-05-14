@@ -15,8 +15,12 @@ case "$@" in
         streamlit run --theme.base dark --browser.gatherUsageStats false ./src/streamlit_web/👋_Hello.py
     ;;
 
+    "slack-loader")
+        python -m loader.slack
+    ;;
+
    *)
         echo "not support command: $@"
-        echo "available commands: slack-bot, mcp-server, web"
+        echo "available commands: slack-bot, mcp-server, web, slack-loader"
    ;;
 esac

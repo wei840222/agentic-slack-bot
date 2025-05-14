@@ -21,12 +21,12 @@ def create_google_search_tool(config: AgentConfig) -> BaseTool:
         )
 
     @tool(response_format="content_and_artifact")
-    def google_search(query: str, config: Annotated[RunnableConfig, InjectedToolArg]) -> Tuple[str, List[Artifact]]:
+    def google_search(query: str, num_results: Optional[int], config: Annotated[RunnableConfig, InjectedToolArg]) -> Tuple[str, List[Artifact]]:
         "prompt_name: google_search_tool"
 
         config = AgentConfig.from_runnable_config(config)
         results = _google_search_api.results(
-            query, num_results=config.google_search_num_results)
+            query, num_results=num_results or config.google_search_default_num_results)
 
         artifacts = [Artifact(title=result["title"], link=result["link"],
                               content=result["snippet"]) for result in results]

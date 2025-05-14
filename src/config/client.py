@@ -6,6 +6,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from langsmith import Client as LangSmith
 from langfuse import Langfuse
 from langfuse.callback import CallbackHandler
+from qdrant_client import QdrantClient, models
+
 from .logger import LoggerMixin
 
 
@@ -115,3 +117,33 @@ class LangSmithConfig(BaseSettings, LoggerMixin):
                 api_url=self.endpoint, api_key=self.api_key)
 
         return _langsmith_client
+
+
+_qdrant_client: Optional[QdrantClient] = None
+
+
+class QdrantConfig(BaseSettings, LoggerMixin):
+    model_config = SettingsConfigDict(
+        env_prefix="QDRANT_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    host: str
+    port: int
+    https: bool = True
+    skip_ssl_verify: bool = False
+    api_key: Optional[str] = None
+
+    def get_qdrant_client(self) -> QdrantClient:
+        global _qdrant_client
+        if _qdrant_client is None:
+            _qdrant_client = QdrantClient(
+                host=self.host,
+                port=self.port,
+                https=self.https,
+                verify=not self.skip_ssl_verify,
+                api_key=self.api_key
+            )
+        return _qdrant_client

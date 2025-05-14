@@ -62,6 +62,7 @@ prompts:
 
       Args:
           query: The google search query.
+          num_results: The number of results to return.
 
   - name: markitdown_crawler_tool
     text: |

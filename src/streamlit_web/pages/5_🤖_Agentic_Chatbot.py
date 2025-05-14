@@ -95,7 +95,7 @@ if st.session_state["is_thinking"] and st.session_state["messages"][-1]["role"] 
                     "session_id": st.session_state["session_id"],
                 },
                 configurable={
-                    "context": f"- Current time is {datetime.datetime.now(datetime.timezone.utc).isoformat()}.",
+                    "context": f"- Current time is {datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")}.",
                     "thread_id": st.session_state["session_id"],
                 },
                 tags=["streamlit", "message"],

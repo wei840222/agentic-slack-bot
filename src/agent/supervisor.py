@@ -1,4 +1,3 @@
-from langchain.chat_models import init_chat_model
 from langchain_core.messages import AnyMessage, SystemMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableConfig
@@ -18,10 +17,7 @@ def create_supervisor_graph(agent_config: AgentConfig, slack_config: SlackConfig
     https://github.com/langfuse/langfuse/issues/5035
     """
 
-    provider, model = agent_config.model.split("/", maxsplit=1)
-
-    model = init_chat_model(model, model_provider=provider,
-                            google_api_key=agent_config.google_api_key)
+    model = agent_config.load_chat_model()
     web_research_agent = create_web_research_agent(agent_config)
     slack_conversation_agent = create_slack_conversation_agent(
         agent_config, slack_config)

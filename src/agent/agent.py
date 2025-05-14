@@ -1,4 +1,3 @@
-from langchain.chat_models import init_chat_model
 from langchain_core.runnables import Runnable
 from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage
 from langchain_core.prompts import PromptTemplate
@@ -17,11 +16,7 @@ def create_agent(agent_config: AgentConfig) -> Runnable:
     "prompt_name: system_prompt"
 
     logger = agent_config.get_logger()
-    provider, model = agent_config.model.split("/", maxsplit=1)
-
-    model = init_chat_model(model, model_provider=provider,
-                            google_api_key=agent_config.google_api_key)
-
+    model = agent_config.load_chat_model()
     tools = [create_google_search_tool(
         agent_config), create_markitdown_crawler_tool(agent_config)]
 
@@ -74,11 +69,7 @@ def create_agent(agent_config: AgentConfig) -> Runnable:
 def create_web_research_agent(agent_config: AgentConfig) -> Runnable:
     "prompt_name: web_research_agent_system_prompt"
 
-    provider, model = agent_config.model.split("/", maxsplit=1)
-
-    model = init_chat_model(model, model_provider=provider,
-                            google_api_key=agent_config.google_api_key)
-
+    model = agent_config.load_chat_model()
     tools = [create_google_search_tool(
         agent_config), create_markitdown_crawler_tool(agent_config)]
 
@@ -98,11 +89,7 @@ def create_web_research_agent(agent_config: AgentConfig) -> Runnable:
 def create_slack_conversation_agent(agent_config: AgentConfig, slack_config: SlackConfig) -> Runnable:
     "prompt_name: slack_conversation_agent_system_prompt"
 
-    provider, model = agent_config.model.split("/", maxsplit=1)
-
-    model = init_chat_model(model, model_provider=provider,
-                            google_api_key=agent_config.google_api_key)
-
+    model = agent_config.load_chat_model()
     tools = [create_get_slack_conversation_replies_tool(
         slack_config), create_get_slack_conversation_history_tool(slack_config)]
 
