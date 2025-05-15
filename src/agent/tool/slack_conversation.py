@@ -1,17 +1,20 @@
-import datetime
 from typing import List, Tuple, Annotated, Optional
 
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
 from langchain.tools import BaseTool, tool
+from qdrant_client import QdrantClient, models
 
 from config import SlackConfig, AgentConfig
+from config.client import QdrantConfig
+
 from slack_bot.client import SlackClient
 from slack_bot.types import message_to_text
 from agent.chain import create_make_title_chain
 from .types import Artifact
 
 _slack_client: Optional[SlackClient] = None
+_qdrant_client: Optional[QdrantClient] = None
 
 
 def clean_title(title: str) -> str:
@@ -85,3 +88,48 @@ def create_get_slack_conversation_history_tool(config: SlackConfig) -> BaseTool:
         "get_slack_conversation_history_tool").text
 
     return get_slack_conversation_history
+
+
+def create_search_slack_conversation_tool(slack_config: SlackConfig, qdrant_config: QdrantConfig) -> BaseTool:
+    global _qdrant_client
+
+    if _qdrant_client is None:
+        _qdrant_client = qdrant_config.get_qdrant_client()
+
+    @tool(response_format="content_and_artifact")
+    def search_slack_conversation(query: str, channel_ids: Optional[List[str]], num_results: Optional[int], config: Annotated[RunnableConfig, InjectedToolArg]) -> Tuple[str, List[Artifact]]:
+        "prompt_name: search_slack_conversation_tool"
+
+        agent_config = AgentConfig.from_runnable_config(config)
+
+        results = _qdrant_client.query_points(
+            collection_name="slack",
+            query=agent_config.load_embeddings_model().embed_query(query),
+            query_filter=models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key="metadata.channel_id",
+                        match=models.MatchAny(any=channel_ids),
+                    )
+                ]
+            ) if channel_ids else None,
+            limit=num_results or agent_config.slack_search_default_num_results,
+            score_threshold=agent_config.slack_search_score_threshold,
+        )
+
+        agent_config.get_logger().debug(
+            "search_slack_conversation", results=results)
+
+        content = "\n\n===\n\n".join([point.payload["page_content"]
+                                     for point in results.points])
+        artifacts = [Artifact(title=point.payload["metadata"]["title"],
+                              link=point.payload["metadata"]["source"],
+                              content=point.payload["page_content"],
+                              metadata={"score": point.score, **{k: v for k, v in point.payload["metadata"].items() if k not in {"title", "source", "source_key"}}})
+                     for point in results.points]
+        return content, artifacts
+
+    search_slack_conversation.description = slack_config.get_prompt(
+        "search_slack_conversation_tool").text
+
+    return search_slack_conversation

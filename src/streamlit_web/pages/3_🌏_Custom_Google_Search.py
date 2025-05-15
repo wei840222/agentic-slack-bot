@@ -40,12 +40,7 @@ def get_search_results(query: str, num_results: int, crawl: bool = False) -> Lis
             "id": str(uuid.uuid4()),
             "type": "tool_call",
             "name": google_search.name,
-            "args": {"query": query},
-        },
-        config={
-            "configurable": {
-                "google_search_num_results": num_results,
-            },
+            "args": {"query": query, "num_results": num_results},
         },
     ).artifact
     if crawl:

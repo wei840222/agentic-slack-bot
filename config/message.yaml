@@ -10,6 +10,8 @@ emojis:
     emoji: 💬
   - name: get_slack_conversation_history_tool_artifact_icon
     emoji: 💬
+  - name: search_slack_conversation_tool_artifact_icon
+    emoji: 🔍
 
 messages:
   - name: content_disclaimer_message

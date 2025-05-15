@@ -7,6 +7,8 @@ from langchain_core.documents import Document
 
 from config import SlackConfig, AgentConfig
 from config.client import QdrantConfig
+from agent.chain import create_make_title_chain
+from agent.tool import clean_title
 from slack_bot.client import SlackClient
 from slack_bot.types import message_to_text
 
@@ -44,6 +46,11 @@ if __name__ == "__main__":
             field_name="metadata.source_key",
             field_schema="keyword"
         )
+        qdrant_client.create_payload_index(
+            collection_name=COLLECTION_NAME,
+            field_name="metadata.channel_id",
+            field_schema="keyword"
+        )
 
     vector_store = QdrantVectorStore(
         client=qdrant_client,
@@ -67,7 +74,7 @@ if __name__ == "__main__":
                         page_content="",
                         metadata={
                             "type": "chunk",
-                            "channel": channel["id"],
+                            "channel_id": channel["id"],
                             "source": slack_client.build_thread_url(channel["id"], message["ts"]),
                             "source_key": f"{channel['id']}@{message['ts']}",
                             "user": message["user"] if "user" in message else None,
@@ -95,6 +102,8 @@ if __name__ == "__main__":
                             **results[0].payload["metadata"])
                         if "chunk_index" in existing_metadata:
                             del existing_metadata["chunk_index"]
+                        if "title" in existing_metadata:
+                            del existing_metadata["title"]
                         if existing_metadata == doc.metadata:
                             logger.info("Document not changed, skipping",
                                         metadata=results[0].payload["metadata"])
@@ -110,6 +119,10 @@ if __name__ == "__main__":
                         continue
                     doc.page_content += f"\n\n---\n\n{text}"
                 doc.page_content = doc.page_content.strip().removeprefix("---\n\n")
+
+                title = create_make_title_chain(agent_config).invoke(
+                    input={"input": doc.page_content})
+                doc.metadata["title"] = clean_title(title)
 
                 logger.info("Splitting document", metadata=doc.metadata)
 

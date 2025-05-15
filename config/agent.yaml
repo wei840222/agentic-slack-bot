@@ -87,6 +87,14 @@ prompts:
         url: The Slack channel URL.
         message_count: The number of messages to get.
 
+  - name: search_slack_conversation_tool
+    text: |
+      Search conversation in some given Slack channel ids or all channels.
+
+      Args:
+        query: The query to search.
+        channel_id: The Slack channel ids to search. If empty, search all channels.
+
   - name: check_new_conversation
     text: |
       Classify the following input means to start a new conversation.
