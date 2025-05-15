@@ -47,7 +47,7 @@ st.sidebar.markdown(
 
 st.plotly_chart(get_emoji_sentiment_fig(), use_container_width=True)
 
-st.write("---")
+st.divider()
 
 st.header("Search emoji by short name")
 

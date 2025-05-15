@@ -77,8 +77,9 @@ with col3:
 if query:
     if results := get_search_results(query, [channel["id"] for channel in CHANNELS if channel["name"] in channel_names], num_results):
         for result in results:
-            with st.expander(f"[{result['title']}]({result['link']})"):
-                st.code(result["content"], language="markdown")
-                st.write(result["metadata"])
+            st.markdown(f"[{result['title']}]({result['link']})")
+            st.code(result["content"], language="markdown")
+            st.write(result["metadata"])
+            st.divider()
     else:
         st.markdown("No search results found.")

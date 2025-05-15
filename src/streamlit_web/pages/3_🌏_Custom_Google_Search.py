@@ -78,10 +78,10 @@ if query:
     if results := get_search_results(query, num_results, crawl):
         for result in results:
             st.markdown(f"[{result['title']}]({result['link']})")
-            st.write(result["content"])
+            st.code(result["content"], language="markdown")
             if crawl and "markdown" in result:
                 with st.expander("Full Content in Markdown"):
                     st.markdown(result["markdown"])
-            st.write("---")
+            st.divider()
     else:
         st.markdown("No search results found.")

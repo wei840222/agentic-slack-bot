@@ -63,7 +63,7 @@ if channel_url:
         st.markdown("No messages found.")
 
 
-st.write("---")
+st.divider()
 
 st.subheader("Conversations Replies")
 
