@@ -17,6 +17,8 @@ LANGSMITH_PROJECT=xxxxxx
 LANGSMITH_API_KEY=lsv2_xxxxxxxxx
 GOOGLE_API_KEY=xxxxxxxx
 GOOGLE_CSE_ID=xxxxxxxx
+QDRANT_HOST=xxxxxx.cloud.qdrant.io
+QDRANT_API_KEY=xxxxxxxxxx
 ```
 
 How to run local ?

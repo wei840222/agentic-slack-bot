@@ -131,7 +131,7 @@ class QdrantConfig(BaseSettings, LoggerMixin):
     )
 
     host: str
-    port: int
+    port: int = 6333
     https: bool = True
     skip_ssl_verify: bool = False
     api_key: Optional[str] = None
