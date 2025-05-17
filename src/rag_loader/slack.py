@@ -43,7 +43,7 @@ if __name__ == "__main__":
         )
         qdrant_client.create_payload_index(
             collection_name=COLLECTION_NAME,
-            field_name="metadata.source_key",
+            field_name="metadata.source",
             field_schema="keyword"
         )
         qdrant_client.create_payload_index(
@@ -76,7 +76,6 @@ if __name__ == "__main__":
                             "type": "chunk",
                             "channel_id": channel["id"],
                             "source": slack_client.build_thread_url(channel["id"], message["ts"]),
-                            "source_key": f"{channel['id']}@{message['ts']}",
                             "user": message["user"] if "user" in message else None,
                             "username": message["username"] if "username" in message else None,
                             "ts": datetime.fromtimestamp(float(message["ts"]), tz=timezone.utc).isoformat().replace("+00:00", "Z"),
@@ -88,9 +87,9 @@ if __name__ == "__main__":
                         scroll_filter=models.Filter(
                             must=[
                                 models.FieldCondition(
-                                    key="metadata.source_key",
+                                    key="metadata.source",
                                     match=models.MatchValue(
-                                        value=doc.metadata["source_key"]),
+                                        value=doc.metadata["source"]),
                                 ),
                             ],
                         ),
@@ -143,9 +142,9 @@ if __name__ == "__main__":
                         filter=models.Filter(
                             must=[
                                 models.FieldCondition(
-                                    key="metadata.source_key",
+                                    key="metadata.source",
                                     match=models.MatchValue(
-                                        value=doc.metadata["source_key"]),
+                                        value=doc.metadata["source"]),
                                 ),
                             ],
                         )

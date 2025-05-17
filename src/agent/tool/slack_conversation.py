@@ -133,7 +133,7 @@ def create_search_slack_conversation_tool(slack_config: SlackConfig, qdrant_conf
         artifacts = [Artifact(title=point.payload["metadata"]["title"],
                               link=point.payload["metadata"]["source"],
                               content=point.payload["page_content"],
-                              metadata={"vector_score": point.score, **{k: v for k, v in point.payload["metadata"].items() if k not in {"title", "source", "source_key"}}})
+                              metadata={"vector_score": point.score, **{k: v for k, v in point.payload["metadata"].items() if k not in {"title", "source"}}})
                      for point in results.points]
 
         _, project_id = google.auth.default()
