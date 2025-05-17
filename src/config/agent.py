@@ -68,34 +68,44 @@ class AgentConfig(BaseSettings, LoggerMixin, PromptMixin, EmojiMixin, MessageMix
     )
 
     model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = Field(
-        # default="google_vertexai/gemini-2.0-flash",
-        default="google_genai/gemini-2.0-flash",
+        default="google_vertexai/gemini-2.0-flash",
+        # default="google_genai/gemini-2.0-flash",
         description="The name of the language model to use for the agent's main interactions."
         "Should be in the form: provider/model-name."
     )
 
-    embeddings_model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = Field(
-        # default="google_vertexai/text-embedding-large-exp-03-07",
-        default="google_genai/gemini-embedding-exp-03-07",
+    embeddings_model: str = Field(
+        default="google_vertexai/text-embedding-large-exp-03-07",
+        # default="google_genai/gemini-embedding-exp-03-07",
         description="The name of the language model to use for the agent's embeddings."
         "Should be in the form: provider/model-name."
     )
 
-    google_api_key: str = Field(description="The API key for the Google API.")
+    rerank_model: str = Field(
+        default="semantic-ranker-default-004",
+        description="The name of the rerank model to use for the rag reranking."
+    )
+
+    google_api_key: Optional[str] = Field(
+        default=None, description="The API key for the Google API.")
     google_cse_id: str = Field(description="The CSE ID for the Google API.")
     google_search_default_num_results: int = Field(
         default=3,
         description="The number of search results to return for each search query."
     )
 
-    slack_search_default_num_results: int = Field(
+    slack_search_default_top_n: int = Field(
         default=3,
         description="The number of search results to return for each search query."
     )
 
-    slack_search_score_threshold: float = Field(
+    slack_search_top_p: float = Field(
         default=0.6,
         description="The score threshold for the search results."
+    )
+    slack_search_rerank_top_n_multiplier: float = Field(
+        default=5.0,
+        description="The multiplier for the number of search results to fetch before reranking. For example, if num_results=10 and multiplier=3, we'll fetch 30 results then rerank to get the top 10."
     )
 
     @classmethod
@@ -109,15 +119,12 @@ class AgentConfig(BaseSettings, LoggerMixin, PromptMixin, EmojiMixin, MessageMix
 
     def load_chat_model(self) -> Runnable:
         provider, model = self.model.split("/", maxsplit=1)
-        kwargs = {}
-        if provider == "google_genai":
-            kwargs["google_api_key"] = self.google_api_key
-        return init_chat_model(model, model_provider=provider, **kwargs)
+        return init_chat_model(model, model_provider=provider)
 
     def load_embeddings_model(self) -> Runnable:
         provider, model = self.embeddings_model.split("/", maxsplit=1)
         if provider == "google_genai":
-            return GoogleGenerativeAIEmbeddings(model=f"models/{model}", task_type="semantic_similarity", google_api_key=self.google_api_key)
+            return GoogleGenerativeAIEmbeddings(model=f"models/{model}", task_type="semantic_similarity")
         if provider == "google_vertexai":
             return VertexAIEmbeddings(model)
         raise ValueError(

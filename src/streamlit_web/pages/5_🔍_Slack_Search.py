@@ -72,7 +72,7 @@ with col2:
     )
 with col3:
     num_results = st.number_input(
-        "Number of results", min_value=1, max_value=15, value=5)
+        "Number of results", min_value=1, max_value=10, value=3)
 
 if query:
     if results := get_search_results(query, [channel["id"] for channel in CHANNELS if channel["name"] in channel_names], num_results):

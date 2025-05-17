@@ -15,10 +15,7 @@ def create_google_search_tool(config: AgentConfig) -> BaseTool:
     global _google_search_api
 
     if _google_search_api is None:
-        _google_search_api = GoogleSearchAPIWrapper(
-            google_api_key=config.google_api_key,
-            google_cse_id=config.google_cse_id
-        )
+        _google_search_api = GoogleSearchAPIWrapper()
 
     @tool(response_format="content_and_artifact")
     def google_search(query: str, num_results: Optional[int], config: Annotated[RunnableConfig, InjectedToolArg]) -> Tuple[str, List[Artifact]]:

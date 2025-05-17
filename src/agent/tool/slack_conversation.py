@@ -4,6 +4,8 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
 from langchain.tools import BaseTool, tool
 from qdrant_client import QdrantClient, models
+import google.auth
+from google.cloud import discoveryengine_v1 as discoveryengine
 
 from config import SlackConfig, AgentConfig
 from config.client import QdrantConfig
@@ -15,6 +17,7 @@ from .types import Artifact
 
 _slack_client: Optional[SlackClient] = None
 _qdrant_client: Optional[QdrantClient] = None
+_discoveryengine_client: Optional[discoveryengine.RankServiceClient] = None
 
 
 def clean_title(title: str) -> str:
@@ -92,6 +95,10 @@ def create_get_slack_conversation_history_tool(config: SlackConfig) -> BaseTool:
 
 def create_search_slack_conversation_tool(slack_config: SlackConfig, qdrant_config: QdrantConfig) -> BaseTool:
     global _qdrant_client
+    global _discoveryengine_client
+
+    if _discoveryengine_client is None:
+        _discoveryengine_client = discoveryengine.RankServiceClient()
 
     if _qdrant_client is None:
         _qdrant_client = qdrant_config.get_qdrant_client()
@@ -101,6 +108,8 @@ def create_search_slack_conversation_tool(slack_config: SlackConfig, qdrant_conf
         "prompt_name: search_slack_conversation_tool"
 
         agent_config = AgentConfig.from_runnable_config(config)
+
+        top_n = num_results or agent_config.slack_search_default_top_n
 
         results = _qdrant_client.query_points(
             collection_name="slack",
@@ -113,21 +122,47 @@ def create_search_slack_conversation_tool(slack_config: SlackConfig, qdrant_conf
                     )
                 ]
             ) if channel_ids else None,
-            limit=num_results or agent_config.slack_search_default_num_results,
-            score_threshold=agent_config.slack_search_score_threshold,
+            limit=int(
+                round(top_n * agent_config.slack_search_rerank_top_n_multiplier)),
+            score_threshold=agent_config.slack_search_top_p,
         )
 
         agent_config.get_logger().debug(
-            "search_slack_conversation", results=results)
+            "search_slack_conversation qdrant_client.query_points", results=results)
 
-        content = "\n\n===\n\n".join([point.payload["page_content"]
-                                     for point in results.points])
         artifacts = [Artifact(title=point.payload["metadata"]["title"],
                               link=point.payload["metadata"]["source"],
                               content=point.payload["page_content"],
-                              metadata={"score": point.score, **{k: v for k, v in point.payload["metadata"].items() if k not in {"title", "source", "source_key"}}})
+                              metadata={"vector_score": point.score, **{k: v for k, v in point.payload["metadata"].items() if k not in {"title", "source", "source_key"}}})
                      for point in results.points]
-        return content, artifacts
+
+        _, project_id = google.auth.default()
+        response = _discoveryengine_client.rank(request=discoveryengine.RankRequest(
+            ranking_config=_discoveryengine_client.ranking_config_path(
+                project=project_id,
+                location="global",
+                ranking_config="default_ranking_config",
+            ),
+            model=agent_config.rerank_model,
+            top_n=top_n,
+            query=query,
+            records=[discoveryengine.RankingRecord(id=str(
+                idx), title=artifact["title"], content=artifact["content"], ) for idx, artifact in enumerate(artifacts)],
+        ))
+
+        agent_config.get_logger().debug(
+            "search_slack_conversation discoveryengine_client.rank", response=response)
+
+        reranked_artifacts = []
+        for record in response.records:
+            artifact = artifacts[int(record.id)]
+            artifact["metadata"]["rerank_score"] = record.score
+            reranked_artifacts.append(artifact)
+
+        content = "\n\n===\n\n".join([artifact["content"]
+                                     for artifact in reranked_artifacts])
+
+        return content, reranked_artifacts
 
     search_slack_conversation.description = slack_config.get_prompt(
         "search_slack_conversation_tool").text
