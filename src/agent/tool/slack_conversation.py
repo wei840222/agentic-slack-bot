@@ -32,7 +32,7 @@ def create_get_slack_conversation_replies_tool(config: SlackConfig) -> BaseTool:
         _slack_client = SlackClient(config)
 
     @tool(response_format="content_and_artifact")
-    def get_slack_conversation_replies(url: str, single_message: Optional[bool], config: Annotated[RunnableConfig, InjectedToolArg]) -> Tuple[str, List[Artifact]]:
+    def get_slack_conversation_replies(url: str, single_message: bool = False, config: Annotated[RunnableConfig, InjectedToolArg] = None) -> Tuple[str, List[Artifact]]:
         "prompt_name: get_slack_conversation_replies_tool"
 
         channel_id, ts = _slack_client.get_thread_url_info(
@@ -65,7 +65,7 @@ def create_get_slack_conversation_history_tool(config: SlackConfig) -> BaseTool:
         _slack_client = SlackClient(config)
 
     @tool(response_format="content_and_artifact")
-    def get_slack_conversation_history(url: str, message_count: Optional[int], config: Annotated[RunnableConfig, InjectedToolArg]) -> Tuple[str, List[Artifact]]:
+    def get_slack_conversation_history(url: str, message_count: Optional[int] = None, config: Annotated[RunnableConfig, InjectedToolArg] = None) -> Tuple[str, List[Artifact]]:
         "prompt_name: get_slack_conversation_history_tool"
 
         channel_id = _slack_client.get_channel_url_info(url)
@@ -104,7 +104,7 @@ def create_search_slack_conversation_tool(slack_config: SlackConfig, qdrant_conf
         _qdrant_client = qdrant_config.get_qdrant_client()
 
     @tool(response_format="content_and_artifact")
-    def search_slack_conversation(query: str, channel_ids: Optional[List[str]], num_results: Optional[int], config: Annotated[RunnableConfig, InjectedToolArg]) -> Tuple[str, List[Artifact]]:
+    def search_slack_conversation(query: str, channel_ids: Optional[List[str]] = None, num_results: Optional[int] = None, config: Annotated[RunnableConfig, InjectedToolArg] = None) -> Tuple[str, List[Artifact]]:
         "prompt_name: search_slack_conversation_tool"
 
         agent_config = AgentConfig.from_runnable_config(config)

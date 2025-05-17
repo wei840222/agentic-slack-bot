@@ -6,7 +6,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pymongo import AsyncMongoClient, MongoClient
 from langchain_core.runnables import Runnable, RunnableConfig, ensure_config
 from langchain.chat_models import init_chat_model
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_google_vertexai import VertexAIEmbeddings
 from langgraph.types import Checkpointer
 from langgraph.checkpoint.memory import MemorySaver
@@ -68,15 +67,13 @@ class AgentConfig(BaseSettings, LoggerMixin, PromptMixin, EmojiMixin, MessageMix
     )
 
     model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = Field(
-        default="google_vertexai/gemini-2.0-flash",
-        # default="google_genai/gemini-2.0-flash",
+        default="google_vertexai/gemini-2.5-flash-preview-04-17",
         description="The name of the language model to use for the agent's main interactions."
         "Should be in the form: provider/model-name."
     )
 
     embeddings_model: str = Field(
         default="google_vertexai/text-embedding-large-exp-03-07",
-        # default="google_genai/gemini-embedding-exp-03-07",
         description="The name of the language model to use for the agent's embeddings."
         "Should be in the form: provider/model-name."
     )
@@ -86,8 +83,7 @@ class AgentConfig(BaseSettings, LoggerMixin, PromptMixin, EmojiMixin, MessageMix
         description="The name of the rerank model to use for the rag reranking."
     )
 
-    google_api_key: Optional[str] = Field(
-        default=None, description="The API key for the Google API.")
+    google_api_key: str = Field(description="The API key for the Google API.")
     google_cse_id: str = Field(description="The CSE ID for the Google API.")
     google_search_default_num_results: int = Field(
         default=3,
@@ -123,8 +119,6 @@ class AgentConfig(BaseSettings, LoggerMixin, PromptMixin, EmojiMixin, MessageMix
 
     def load_embeddings_model(self) -> Runnable:
         provider, model = self.embeddings_model.split("/", maxsplit=1)
-        if provider == "google_genai":
-            return GoogleGenerativeAIEmbeddings(model=f"models/{model}", task_type="semantic_similarity")
         if provider == "google_vertexai":
             return VertexAIEmbeddings(model)
         raise ValueError(

@@ -29,8 +29,13 @@ prompts:
       - Verify the results of the web research agent. Make sure the information comes from the google_search_tool or markitdown_crawler_tool, if not, ask web research agent to do it again.
       - Verify the results of the slack conversation agent. Make sure the information comes from the get_slack_conversation_replies_tool or get_slack_conversation_history_tool, if not, ask slack conversation agent to do it again.
       - If the information is not found, ask the user to provide more details.
+      - Answer questions directly without explaining the steps or actions you plan to take or have taken.
       - Do not mention the information of CONTEXT in your response unless the user asks for it.
-      - Do not mention steps or actions you did, just answer the question directly.
+      - Do not describe what you are going to do, directly use delegate_to_web_research_agent or delegate_to_slack_conversation_agent to assign tasks.
+      - Do not mention which agent you are using in your response.
+      - Do not include any thinking process or planning steps in your response.
+      - Do not explain how you will approach the task, just provide the final answer.
+      - Keep responses focused only on the information requested, without meta-commentary.
 
   - name: web_research_agent_system_prompt
     text: |
@@ -54,6 +59,8 @@ prompts:
       - Respond ONLY with the results of your work, do NOT include ANY other text.
       - If the task requires multiple steps, break it down and execute them sequentially.
       - Use the get_slack_conversation_replies_tool to get the replies from the given slack conversation url.
+      - Use the get_slack_conversation_history_tool to get the history from the given slack channel url.
+      - Use the search_slack_conversation_tool to search the conversation by keyword in some given Slack channel ids or all channels.
 
   - name: google_search_tool
     text: |
@@ -94,6 +101,13 @@ prompts:
       Args:
         query: The query to search.
         channel_id: The Slack channel ids to search. If empty, search all channels.
+        num_results: The number of results to return.
+
+      Channel IDs:
+      - name: test-ai-bot
+        id: C08HWC49T9A
+      - name: rss-article
+        id: C03DQ95UCQ4
 
   - name: check_new_conversation
     text: |
