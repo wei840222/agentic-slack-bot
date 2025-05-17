@@ -103,7 +103,7 @@ prompts:
         channel_id: The Slack channel ids to search. If empty, search all channels.
         num_results: The number of results to return.
 
-      Channel IDs:
+      Channels:
       - name: test-ai-bot
         id: C08HWC49T9A
       - name: rss-article
@@ -115,31 +115,49 @@ prompts:
       Except for the following examples, the default classification is `no`.
       Please answer in `yes` or `no`.
 
-      Input: Start a new chat
+      <input>
+      Start a new chat
+      </input>
       Answer: yes
 
-      Input: thx
+      <input>
+      thx
+      </input>
       Answer: no
 
-      Input: I understood.
+      <input>
+      I understood.
+      </input>
       Answer: no
 
-      Input: I want to ask other question.
+      <input>
+      I want to ask other question.
+      </input>
       Answer: no
 
-      Input: Nothing else.
+      <input>
+      Nothing else.
+      </input>
       Answer: no
 
-      Input: Bye.
+      <input>
+      Bye.
+      </input>
       Answer: yes
 
-      Input: I want to ask a new question.
+      <input>
+      I want to ask a new question.
+      </input>
       Answer: yes
 
-      Input: End chat.
+      <input>
+      End chat.
+      </input>
       Answer: yes
 
-      Input: {{input}}
+      <input>
+      {{input}}
+      </input>
       Answer:
 
   - name: make_title
@@ -153,7 +171,8 @@ prompts:
       - Generate title directly.
       - Do not include any other text and provide any choice.
 
-      Content:
+      <content>
       {{input}}
+      </content>
 
       Title:
