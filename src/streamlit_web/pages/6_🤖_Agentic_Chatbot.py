@@ -1,3 +1,4 @@
+import jwt
 import time
 import uuid
 import datetime
@@ -33,6 +34,19 @@ def get_slack_config() -> SlackConfig:
 logger = get_agent_config().get_logger()
 
 
+def get_user_email() -> str:
+    logger.debug(
+        "get_user_email", headers=st.context.headers.to_dict())
+    if "CF_Authorization" in st.context.headers:
+        token = st.context.headers["CF_Authorization"]
+        try:
+            payload = jwt.decode(token, options={"verify_signature": False})
+            return payload["email"]
+        except Exception as e:
+            logger.exception("get_user_email", error=e)
+    return st.session_state.get("user", "anonymous")
+
+
 def ensure_new_line(message: str) -> str:
     return "\n\n".join(message.strip().split("\n"))
 
@@ -52,7 +66,9 @@ def simulate_stream(message: str):
             time.sleep(0.02)
 
 
-st.title("Agentic Chatbot 🤖")
+if "user" not in st.session_state:
+    st.session_state["user"] = get_user_email()
+
 
 if "messages" not in st.session_state:
     st.session_state["session_id"] = str(uuid.uuid4())
@@ -61,6 +77,18 @@ if "messages" not in st.session_state:
 
 if "is_thinking" not in st.session_state:
     st.session_state["is_thinking"] = False
+
+col1, col2, col3 = st.columns([0.75, 0.15, 0.1])
+with col1:
+    st.title("Agentic Chatbot 🤖")
+
+with col2:
+    st.markdown(
+        f"`{st.session_state['session_id']}`\n`{st.session_state['user']}`")
+with col3:
+    st.button(get_agent_config().get_message("new_conversation_message"),
+              on_click=lambda: st.session_state.clear())
+
 
 for idx, message in enumerate(st.session_state["messages"]):
     with st.chat_message(message["role"]):
@@ -90,7 +118,7 @@ if st.session_state["is_thinking"] and st.session_state["messages"][-1]["role"] 
             message_id = str(uuid.uuid4())
             runnable_config = get_agent_config().get_tracker().inject_runnable_config(RunnableConfig(
                 metadata={
-                    "user_id": "anonymous",
+                    "user_id": st.session_state["user"],
                     "message_id": message_id,
                     "session_id": st.session_state["session_id"],
                 },
