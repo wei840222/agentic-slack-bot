@@ -6,7 +6,6 @@ from langchain.tools import BaseTool
 
 from agent.tool import create_search_slack_conversation_tool, Artifact
 from config import SlackConfig
-from config.client import QdrantConfig
 
 st.set_page_config(
     page_title="Slack Search",
@@ -23,16 +22,8 @@ def get_slack_config() -> SlackConfig:
 
 
 @st.cache_resource
-def get_qdrant_config() -> QdrantConfig:
-    config = QdrantConfig()
-    get_slack_config().get_logger().debug(
-        "qdrant config loaded", qdrant_config=config)
-    return config
-
-
-@st.cache_resource
 def get_slack_search_tool() -> BaseTool:
-    return create_search_slack_conversation_tool(get_slack_config(), get_qdrant_config())
+    return create_search_slack_conversation_tool(get_slack_config())
 
 
 @st.cache_data

@@ -5,7 +5,7 @@ from langchain_core.tools import InjectedToolArg
 from langchain.tools import BaseTool, tool
 from langchain_google_community import GoogleSearchAPIWrapper
 
-from config import AgentConfig
+from config import AgentConfig, RagConfig
 from .types import Artifact
 
 
@@ -14,10 +14,10 @@ def create_google_search_tool(config: AgentConfig) -> BaseTool:
     def google_search(query: str, num_results: Optional[int] = None, config: Annotated[RunnableConfig, InjectedToolArg] = None) -> Tuple[str, List[Artifact]]:
         "prompt_name: google_search_tool"
 
-        config: AgentConfig = AgentConfig.from_runnable_config(config)
-        top_n = num_results or config.google_search_default_top_n
+        rag_config: RagConfig = RagConfig.from_runnable_config(config)
+        top_n = num_results or rag_config.google_search_default_top_n
         google_search_api = GoogleSearchAPIWrapper(
-            google_api_key=config.google_api_key, google_cse_id=config.google_cse_id)
+            google_api_key=rag_config.google_api_key, google_cse_id=rag_config.google_cse_id)
         results = google_search_api.results(query, num_results=top_n)
 
         artifacts = [Artifact(title=result["title"], link=result["link"],

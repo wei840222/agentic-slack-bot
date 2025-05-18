@@ -39,13 +39,14 @@ class PromptConfig(YamlBaseSettings):
 
 
 class PromptMixin:
-    _prompt_config: Optional[PromptConfig] = None
-    _langfuse_config: Optional[LangfuseConfig] = None
-    _langsmith_config: Optional[LangSmithConfig] = None
     prompt_provider: PromptProvider = Field(
         default=PromptProvider.YAML,
         description="The provider to use for the agent's prompts."
     )
+
+    _prompt_config: Optional[PromptConfig] = None
+    _langfuse_config: Optional[LangfuseConfig] = None
+    _langsmith_config: Optional[LangSmithConfig] = None
 
     def _get_langsmith_config(self) -> LangSmithConfig:
         if self._langsmith_config is None:

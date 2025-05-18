@@ -3,12 +3,11 @@ from typing import List, Tuple, Annotated, Optional
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
 from langchain.tools import BaseTool, tool
-from qdrant_client import QdrantClient, models
+from qdrant_client import models
 import google.auth
 from google.cloud import discoveryengine_v1 as discoveryengine
 
-from config import SlackConfig, AgentConfig
-from config.client import QdrantConfig
+from config import SlackConfig, AgentConfig, RagConfig
 
 from slack_bot.client import SlackClient
 from slack_bot.types import message_to_text
@@ -16,7 +15,6 @@ from agent.chain import create_make_title_chain
 from .types import Artifact
 
 _slack_client: Optional[SlackClient] = None
-_qdrant_client: Optional[QdrantClient] = None
 
 
 def clean_title(title: str) -> str:
@@ -92,23 +90,20 @@ def create_get_slack_conversation_history_tool(config: SlackConfig) -> BaseTool:
     return get_slack_conversation_history
 
 
-def create_search_slack_conversation_tool(slack_config: SlackConfig, qdrant_config: QdrantConfig) -> BaseTool:
-    global _qdrant_client
-
-    if _qdrant_client is None:
-        _qdrant_client = qdrant_config.get_qdrant_client()
-
+def create_search_slack_conversation_tool(config: SlackConfig) -> BaseTool:
     @tool(response_format="content_and_artifact")
     def search_slack_conversation(query: str, channel_ids: Optional[List[str]] = None, num_results: Optional[int] = None, config: Annotated[RunnableConfig, InjectedToolArg] = None) -> Tuple[str, List[Artifact]]:
         "prompt_name: search_slack_conversation_tool"
 
-        agent_config = AgentConfig.from_runnable_config(config)
+        rag_config: RagConfig = RagConfig.from_runnable_config(config)
+        logger = rag_config.get_logger()
 
-        top_n = num_results or agent_config.slack_search_default_top_n
+        top_n = num_results or rag_config.slack_search_default_top_n
 
-        results = _qdrant_client.query_points(
+        qdrant_client = rag_config.get_qdrant_config().get_qdrant_client()
+        results = qdrant_client.query_points(
             collection_name="slack",
-            query=agent_config.load_embeddings_model().embed_query(query),
+            query=rag_config.load_embeddings_model().embed_query(query),
             query_filter=models.Filter(
                 must=[
                     models.FieldCondition(
@@ -118,11 +113,11 @@ def create_search_slack_conversation_tool(slack_config: SlackConfig, qdrant_conf
                 ]
             ) if channel_ids else None,
             limit=int(
-                round(top_n * agent_config.slack_search_rerank_top_n_multiplier)),
-            score_threshold=agent_config.slack_search_top_p,
+                round(top_n * rag_config.slack_search_rerank_top_n_multiplier)),
+            score_threshold=rag_config.slack_search_top_p,
         )
 
-        agent_config.get_logger().debug(
+        logger.debug(
             "search_slack_conversation qdrant_client.query_points", results=results)
 
         artifacts = [Artifact(title=point.payload["metadata"]["title"],
@@ -139,14 +134,14 @@ def create_search_slack_conversation_tool(slack_config: SlackConfig, qdrant_conf
                 location="global",
                 ranking_config="default_ranking_config",
             ),
-            model=agent_config.rerank_model,
+            model=rag_config.rerank_model,
             top_n=top_n,
             query=query,
             records=[discoveryengine.RankingRecord(id=str(
                 idx), title=artifact["title"], content=artifact["content"], ) for idx, artifact in enumerate(artifacts)],
         ))
 
-        agent_config.get_logger().debug(
+        logger.debug(
             "search_slack_conversation discoveryengine_client.rank", response=response)
 
         reranked_artifacts = []
@@ -160,7 +155,7 @@ def create_search_slack_conversation_tool(slack_config: SlackConfig, qdrant_conf
 
         return content, reranked_artifacts
 
-    search_slack_conversation.description = slack_config.get_prompt(
+    search_slack_conversation.description = config.get_prompt(
         "search_slack_conversation_tool").text
 
     return search_slack_conversation
