@@ -1,0 +1,12 @@
+slack_search_channels:
+  - id: C08HWC49T9A
+    name: test-ai-bot
+    description: |
+      This is a test channel for the AI bot to test the functionality.
+    retrieve_limit: 3
+
+  - id: C03DQ95UCQ4
+    name: rss-article
+    description: |
+      A lot of articles are posted to this channel.
+    retrieve_limit: 3
