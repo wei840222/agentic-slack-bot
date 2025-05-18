@@ -37,8 +37,8 @@ logger = get_agent_config().get_logger()
 def get_user_email() -> str:
     logger.debug(
         "get_user_email", headers=st.context.headers.to_dict())
-    if "CF_Authorization" in st.context.headers:
-        token = st.context.headers["CF_Authorization"]
+    if "Cf-Access-Jwt-Assertion" in st.context.headers:
+        token = st.context.headers["Cf-Access-Jwt-Assertion"]
         try:
             payload = jwt.decode(token, options={"verify_signature": False})
             return payload["email"]

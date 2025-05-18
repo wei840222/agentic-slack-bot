@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from langsmith import Client as LangSmith
 from langfuse import Langfuse
 from langfuse.callback import CallbackHandler
-from qdrant_client import QdrantClient, models
+from qdrant_client import QdrantClient
 
 from .logger import LoggerMixin
 
