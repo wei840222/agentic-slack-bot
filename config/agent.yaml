@@ -1,15 +1,4 @@
 prompts:
-  - name: system_prompt
-    text: |
-      Please answer the user's question and follow the following rules:
-      - Always use the Google Search tool to retrieve the latest web information, like weather, news, map, music, movie, etc.
-      - Answer in Traditional Chinese (ZH-TW).
-      - Think step by step.
-      - Response in markdown format.
-
-      CONTEXT:
-      {{context}}
-
   - name: supervisor_agent_system_prompt
     text: |
       You are a supervisor managing these agents:
@@ -169,6 +158,7 @@ prompts:
       - Avoid overly generic or vague terms.
       - Generate title in Traditional Chinese (ZH-TW).
       - Generate title directly.
+      - Do not include any user id, bot id, url and other identifiers.
       - Do not include any other text and provide any choice.
 
       <content>

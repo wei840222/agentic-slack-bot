@@ -85,7 +85,7 @@ class AgentConfig(BaseSettings, LoggerMixin, PromptMixin, EmojiMixin, MessageMix
 
     google_api_key: str = Field(description="The API key for the Google API.")
     google_cse_id: str = Field(description="The CSE ID for the Google API.")
-    google_search_default_num_results: int = Field(
+    google_search_default_top_n: int = Field(
         default=3,
         description="The number of search results to return for each search query."
     )
@@ -113,9 +113,9 @@ class AgentConfig(BaseSettings, LoggerMixin, PromptMixin, EmojiMixin, MessageMix
         configurable = config.get("configurable") or {}
         return cls(**{k: v for k, v in configurable.items() if k in cls.model_fields})
 
-    def load_chat_model(self) -> Runnable:
+    def load_chat_model(self, **kwargs) -> Runnable:
         provider, model = self.model.split("/", maxsplit=1)
-        return init_chat_model(model, model_provider=provider)
+        return init_chat_model(model, model_provider=provider, **kwargs)
 
     def load_embeddings_model(self) -> Runnable:
         provider, model = self.embeddings_model.split("/", maxsplit=1)

@@ -17,7 +17,6 @@ from .types import Artifact
 
 _slack_client: Optional[SlackClient] = None
 _qdrant_client: Optional[QdrantClient] = None
-_discoveryengine_client: Optional[discoveryengine.RankServiceClient] = None
 
 
 def clean_title(title: str) -> str:
@@ -95,10 +94,6 @@ def create_get_slack_conversation_history_tool(config: SlackConfig) -> BaseTool:
 
 def create_search_slack_conversation_tool(slack_config: SlackConfig, qdrant_config: QdrantConfig) -> BaseTool:
     global _qdrant_client
-    global _discoveryengine_client
-
-    if _discoveryengine_client is None:
-        _discoveryengine_client = discoveryengine.RankServiceClient()
 
     if _qdrant_client is None:
         _qdrant_client = qdrant_config.get_qdrant_client()
@@ -136,9 +131,10 @@ def create_search_slack_conversation_tool(slack_config: SlackConfig, qdrant_conf
                               metadata={"vector_score": point.score, **{k: v for k, v in point.payload["metadata"].items() if k not in {"title", "source"}}})
                      for point in results.points]
 
+        discoveryengine_client = discoveryengine.RankServiceClient()
         _, project_id = google.auth.default()
-        response = _discoveryengine_client.rank(request=discoveryengine.RankRequest(
-            ranking_config=_discoveryengine_client.ranking_config_path(
+        response = discoveryengine_client.rank(request=discoveryengine.RankRequest(
+            ranking_config=discoveryengine_client.ranking_config_path(
                 project=project_id,
                 location="global",
                 ranking_config="default_ranking_config",

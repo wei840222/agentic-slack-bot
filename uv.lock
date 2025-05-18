@@ -40,7 +40,7 @@ requires-dist = [
     { name = "emoji-sentiment", specifier = ">=0.0.5" },
     { name = "google-cloud-discoveryengine", specifier = ">=0.13.8" },
     { name = "langchain-google-community", specifier = ">=2.0.7" },
-    { name = "langchain-google-vertexai", specifier = ">=2.0.23" },
+    { name = "langchain-google-vertexai", specifier = ">=2.0.4" },
     { name = "langchain-qdrant", specifier = ">=0.2.0" },
     { name = "langfuse", specifier = ">=2.60.3" },
     { name = "langgraph", specifier = ">=0.3.34" },
