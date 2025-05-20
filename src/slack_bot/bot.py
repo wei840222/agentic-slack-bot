@@ -217,7 +217,7 @@ class SlackBot:
                     self.logger.debug("found reply", reply=json.dumps(
                         reply, ensure_ascii=False))
                     self.tracker.collect_emoji_feedback(reply["metadata"]["event_payload"]["reply_message_id"], event.user,
-                                                        reply["metadata"]["event_payload"]["reply_message"], reply["text"], event.data["reaction"])
+                                                        reply["metadata"]["event_payload"]["reply_message"], reply["text"], event.data["reaction"], "slack")
                 except KeyError:
                     self.logger.warning("no message_id or message found in reply",
                                         reply=json.dumps(reply, ensure_ascii=False))

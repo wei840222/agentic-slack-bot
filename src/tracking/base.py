@@ -26,7 +26,7 @@ class BaseTracker(ABC):
         return config
 
     @abstractmethod
-    def collect_emoji_feedback(self, message_id: str, user_id: str, message: str, reply_message: str, emoji_name: str) -> None:
+    def collect_emoji_feedback(self, message_id: str, user_id: str, message: str, reply_message: str, emoji_name: str, source: str) -> None:
         return NotImplemented
 
     def flush() -> None:

@@ -51,7 +51,10 @@ messages:
   - name: assistant_greeting_prompt_2_icon
     text: 📚
   - name: assistant_greeting_prompt_2_message
-    text: 請幫我解這個微積分問題：求函數 f(x) = x^2 * sin(x) 在區間 [0, π] 上的定積分。
+    text: |
+      請幫我解這個微積分問題：求函數 f(x) = x^2 * sin(x) 在區間 [0, π] 上的定積分。
+      並且提供詳細的解題過程。
+      如果你不知道怎麼解，請上網搜尋。
 
   - name: assistant_greeting_prompt_3_title
     text: 開發演算法
