@@ -156,6 +156,13 @@ def create_search_slack_conversation_tool(config: SlackConfig) -> BaseTool:
         return content, reranked_artifacts
 
     search_slack_conversation.description = config.get_prompt(
-        "search_slack_conversation_tool").text
+        "search_slack_conversation_tool").text.strip()
+    search_slack_conversation.description += "\n\nChannels:\n"
+    search_slack_conversation.description += "\n".join([f"""
+- name: {channel["name"]}
+  id: {channel["id"]}
+  id_from_slack: <#{channel["id"]}|>
+  description: {channel["description"]}
+""".strip() for channel in RagConfig().slack_search_channels])
 
     return search_slack_conversation

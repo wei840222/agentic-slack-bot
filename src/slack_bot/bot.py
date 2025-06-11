@@ -19,7 +19,7 @@ from agent.supervisor import create_supervisor_graph
 from agent.parser import parse_agent_result
 from agent.chain import create_check_new_conversation_chain
 from .client import SlackAsyncClient
-from .types import SlackEvent, SlackEventType
+from .types import SlackEvent, SlackEventType, message_to_text
 
 
 class SlackBot:
@@ -138,7 +138,7 @@ class SlackBot:
         event.session_id = await self.client.find_session_id(
             event, in_replies=self.config.assistant)
 
-        runnable_config = self.create_runnable_config(event)
+        runnable_config = await self.create_runnable_config(event, fetch_conversations_replies=False)
         if self.tracker is not None:
             runnable_config = self.tracker.inject_runnable_config(
                 runnable_config)
@@ -187,7 +187,7 @@ class SlackBot:
         event.session_id = await self.client.find_session_id(
             event, in_replies=True)
 
-        runnable_config = self.create_runnable_config(event)
+        runnable_config = await self.create_runnable_config(event)
         if self.tracker is not None:
             runnable_config = self.tracker.inject_runnable_config(
                 runnable_config)
@@ -223,18 +223,31 @@ class SlackBot:
                                         reply=json.dumps(reply, ensure_ascii=False))
                 break
 
-    def create_runnable_config(self, event: SlackEvent) -> RunnableConfig:
+    async def create_runnable_config(self, event: SlackEvent, fetch_conversations_replies: bool = True) -> RunnableConfig:
         context = f"""
-- Your name is <@{self.config.bot_id}>.
+- Your name is <@{self.config.bot_id}> .
 - User <@{event.user}> is asking you question.
-- You are in the slack channel_id `{event.channel}`.
-- Url in `{self.config.workspace_url}/archives/(channel_id)` format is slack channel url.
-- Url in `{self.config.workspace_url}/archives/(channel_id)/p(timestamp_in_milliseconds)` format is slack conversation url.
-- Current slack channel url is `{self.client.build_channel_url(event.channel)}`.
-- Current slack conversation url is `{self.client.build_thread_url(event.channel, event.data["ts"], event.data["thread_ts"] if "thread_ts" in event.data else None)}`.
-- When user mentions "here", "current conversation", "these people", use slack conversation url to get additional information.
-- When user mentions "this channel", use slack channel url to get additional information.
-- Current time is {datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")}.
+- Current slack channel id is <#{event.channel}|> .
+- Current slack channel url is {self.client.build_channel_url(event.channel)} .
+- Current slack conversation url is {self.client.build_thread_url(event.channel, event.data["ts"], event.data["thread_ts"] if "thread_ts" in event.data else None)} .
+- Current time is {datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")} .
+"""
+
+        if fetch_conversations_replies:
+            context += "- Current slack conversations are as follows:"
+            replies = await self.client.fetch_conversations_replies(
+                event.channel, event.data["thread_ts"] if "thread_ts" in event.data else event.data["ts"])
+            for reply in replies:
+                context += f"""
+<slack_conversation>
+{message_to_text(reply)}
+</slack_conversation>
+    """
+
+        slack_conversation_agent_context = f"""
+- Current slack channel id is <#{event.channel}|> .
+- Current slack channel url is {self.client.build_channel_url(event.channel)} .
+- Current slack conversation url is {self.client.build_thread_url(event.channel, event.data["ts"], event.data["thread_ts"] if "thread_ts" in event.data else None)} .
 """
 
         return RunnableConfig(
@@ -245,6 +258,7 @@ class SlackBot:
             },
             configurable={
                 "context": context.strip(),
+                "slack_conversation_agent_context": slack_conversation_agent_context.strip(),
                 "thread_id": event.session_id,
             },
             tags=["slack", event.type.value],
