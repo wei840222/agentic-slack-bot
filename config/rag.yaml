@@ -1,12 +1,18 @@
 slack_search_channels:
-  - id: C08HWC49T9A
-    name: test-ai-bot
+  - id: C090X8VPDA9
+    name: agentic-bot-playground
     description: |
-      This is a test channel for the AI bot to test the functionality.
+      This is a test channel for the agentic bot to test the functionality.
     retrieve_limit: 3
 
-  - id: C03DQ95UCQ4
-    name: rss-article
+  - id: C08TJ0RJ0JU
+    name: rss-ithome
     description: |
-      A lot of articles are posted to this channel.
-    retrieve_limit: 3
+      A lot of IT news are posted to this channel.
+    retrieve_limit: 1
+
+  - id: C08VB4JEELX
+    name: rss-blocktempo
+    description: |
+      A lot of blockchain news are posted to this channel.
+    retrieve_limit: 1

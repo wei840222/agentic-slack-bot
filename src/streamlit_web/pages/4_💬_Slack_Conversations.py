@@ -39,7 +39,7 @@ st.subheader("Conversations History")
 col1, col2, col3 = st.columns(3)
 with col1:
     channel_url = st.text_input(
-        "url", value="https://helenworkspacegroup.slack.com/archives/C08HWC49T9A")
+        "url", value="https://wei840222-home-infra.slack.com/archives/C090F9D535M")
 with col2:
     history_page_size = st.number_input(
         "Page size", min_value=1, max_value=100, value=3)
@@ -70,7 +70,7 @@ st.subheader("Conversations Replies")
 col11, col12 = st.columns(2)
 with col11:
     message_url = st.text_input(
-        "url", value="https://helenworkspacegroup.slack.com/archives/C08HWC49T9A/p1746351479452869?thread_ts=1746351463.989399&cid=C08HWC49T9A")
+        "url", value="https://wei840222-home-infra.slack.com/archives/C090X8VPDA9/p1749644769616199?thread_ts=1749644760.262149&cid=C090X8VPDA9")
 with col12:
     message_limit = st.number_input(
         "Message number limit", min_value=1, max_value=150, value=3)

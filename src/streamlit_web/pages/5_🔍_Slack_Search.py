@@ -5,13 +5,19 @@ import streamlit as st
 from langchain.tools import BaseTool
 
 from agent.tool import create_search_slack_conversation_tool, Artifact
-from config import SlackConfig
+from config import SlackConfig, RagConfig
 
 st.set_page_config(
     page_title="Slack Search",
     page_icon="🔍",
     layout="wide",
 )
+
+@st.cache_resource
+def get_rag_config() -> RagConfig:
+    config = RagConfig()
+    config.get_logger().debug("rag config loaded", rag_config=config)
+    return config
 
 
 @st.cache_resource
@@ -52,10 +58,7 @@ with col1:
     query = st.text_input(
         "Search query, e.g., 'Google 人工智慧新技術有甚麼', '天氣怎麼樣'", value="Google 人工智慧新技術有甚麼")
 with col2:
-    CHANNELS = [
-        {"name": "test-ai-bot", "id": "C08HWC49T9A", "limit": 3},
-        {"name": "rss-article", "id": "C03DQ95UCQ4", "limit": 3},
-    ]
+    CHANNELS = get_rag_config().slack_search_channels
     channel_names = st.multiselect(
         "Select the channel IDs to search in. If no channel IDs are selected, all channels will be searched.",
         [channel["name"] for channel in CHANNELS],

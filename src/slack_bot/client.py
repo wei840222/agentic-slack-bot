@@ -110,6 +110,7 @@ class SlackClient(BaseSlackClient):
         super().__init__(config, logger)
         self.client = client or WebClient(token=config.bot_token)
 
+    @backoff.on_exception(backoff.expo, SlackApiError, max_time=600, giveup=slack_api_error_is_not_retryable, logger=LoggerConfig().logger)
     def fetch_conversations_history(self, channel: str, limit: Optional[int], size: int = 100) -> SlackChannelHistory:
         result = SlackChannelHistory(channel=channel, pages=[])
         pages = 1
@@ -143,7 +144,7 @@ class SlackClient(BaseSlackClient):
 
         return result
 
-    @backoff.on_exception(backoff.expo, SlackApiError, max_time=60, giveup=slack_api_error_is_not_retryable, logger=LoggerConfig().logger)
+    @backoff.on_exception(backoff.expo, SlackApiError, max_time=600, giveup=slack_api_error_is_not_retryable, logger=LoggerConfig().logger)
     def fetch_conversations_replies(self, channel: str, ts: str, limit: Optional[int] = None) -> List[SlackMessage]:
         self.logger.info("fetching conversations replies",
                          channel=channel, ts=ts)
@@ -316,6 +317,7 @@ class SlackAsyncClient(BaseSlackClient):
         super().__init__(config, logger)
         self.client = client or AsyncWebClient(token=config.bot_token)
 
+    @backoff.on_exception(backoff.expo, SlackApiError, max_time=600, giveup=slack_api_error_is_not_retryable, logger=LoggerConfig().logger)
     async def fetch_conversations_history(self, channel: str, limit: Optional[int], size: int = 100) -> SlackChannelHistory:
         result = SlackChannelHistory(channel=channel, pages=[])
         pages = 1
@@ -349,7 +351,7 @@ class SlackAsyncClient(BaseSlackClient):
 
         return result
 
-    @backoff.on_exception(backoff.expo, SlackApiError, max_time=60, giveup=slack_api_error_is_not_retryable, logger=LoggerConfig().logger)
+    @backoff.on_exception(backoff.expo, SlackApiError, max_time=600, giveup=slack_api_error_is_not_retryable, logger=LoggerConfig().logger)
     async def fetch_conversations_replies(self, channel: str, ts: str, limit: Optional[int] = None) -> List[SlackMessage]:
         self.logger.info("fetching conversations replies",
                          channel=channel, ts=ts)

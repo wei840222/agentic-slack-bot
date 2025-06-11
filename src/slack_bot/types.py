@@ -78,8 +78,10 @@ def message_to_text(message: SlackMessage) -> Optional[str]:
     content = f"Time:\n{datetime.datetime.fromtimestamp(float(message['ts']), datetime.timezone.utc).isoformat().replace("+00:00", "Z")}\n\n"
 
     if message.get("subtype", "") == "bot_message":
-        content += f"Post Author:\n{message['username']}\n\n"
-        content += f"Post:\n{message['text']}\n\n"
+        if "username" in message:
+            content += f"Post Author:\n{message['username']}\n\n"
+        if text := message.get("text", ""):
+            content += f"Post:\n{text}\n\n"
     else:
         content += f"User:\n<@{message['user']}>\n\n"
         content += f"Message:\n{message['text']}\n\n"
