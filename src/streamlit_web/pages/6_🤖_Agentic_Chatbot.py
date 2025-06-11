@@ -142,6 +142,7 @@ if st.session_state["is_thinking"] and st.session_state["messages"][-1]["role"] 
                 },
                 configurable={
                     "context": f"- Current time is {datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")}.",
+                    "slack_conversation_agent_context": "",
                     "thread_id": st.session_state["session_id"],
                 },
                 tags=["streamlit", "message"],
