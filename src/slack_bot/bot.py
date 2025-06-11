@@ -170,7 +170,7 @@ class SlackBot:
         agent = create_supervisor_graph(self.agent_config, self.config)
         agent_result = await agent.ainvoke(
             input={
-                "messages": [HumanMessage(content=event.data["text"])]
+                "messages": [HumanMessage(content=self.client.replace_channel_id_with_url(event.data["text"]))]
             },
             config=runnable_config,
         )
@@ -195,7 +195,7 @@ class SlackBot:
         agent = create_supervisor_graph(self.agent_config, self.config)
         agent_result = await agent.ainvoke(
             input={
-                "messages": [HumanMessage(content=event.data["text"])]
+                "messages": [HumanMessage(content=self.client.replace_channel_id_with_url(event.data["text"]))]
             },
             config=runnable_config,
         )
