@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     for channel in rag_config.slack_search_channels:
         history = slack_client.fetch_conversations_history(
-            channel["id"], channel["retrieve_limit"], 100)
+            channel["id"], channel["retrieve_limit"], 15)
 
         for page in history["pages"]:
             for message in page["messages"]:

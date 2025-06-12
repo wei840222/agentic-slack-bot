@@ -223,7 +223,7 @@ class SlackBot:
                                         reply=json.dumps(reply, ensure_ascii=False))
                 break
 
-    async def create_runnable_config(self, event: SlackEvent, fetch_conversations_replies: bool = True) -> RunnableConfig:
+    async def create_runnable_config(self, event: SlackEvent, fetch_conversations_replies: bool = False) -> RunnableConfig:
         context = f"""
 - Your name is <@{self.config.bot_id}> .
 - User <@{event.user}> is asking you question.

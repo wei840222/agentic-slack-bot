@@ -42,7 +42,7 @@ with col1:
         "url", value="https://wei840222-home-infra.slack.com/archives/C090F9D535M")
 with col2:
     history_page_size = st.number_input(
-        "Page size", min_value=1, max_value=100, value=3)
+        "Page size", min_value=1, max_value=15, value=3)
 with col3:
     history_limit = st.number_input(
         "Page number limit", min_value=1, value=1)
@@ -73,7 +73,7 @@ with col11:
         "url", value="https://wei840222-home-infra.slack.com/archives/C090X8VPDA9/p1749644769616199?thread_ts=1749644760.262149&cid=C090X8VPDA9")
 with col12:
     message_limit = st.number_input(
-        "Message number limit", min_value=1, max_value=150, value=3)
+        "Message number limit", min_value=1, max_value=15, value=3)
 use_thread_ts = st.checkbox("Use thread ts", value=True)
 
 if message_url:

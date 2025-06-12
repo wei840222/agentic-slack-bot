@@ -115,7 +115,7 @@ class SlackClient(BaseSlackClient):
         self.client = client or WebClient(token=config.bot_token)
 
     @backoff.on_exception(backoff.expo, SlackApiError, max_time=600, giveup=slack_api_error_is_not_retryable, logger=LoggerConfig().logger)
-    def fetch_conversations_history(self, channel: str, limit: Optional[int], size: int = 100) -> SlackChannelHistory:
+    def fetch_conversations_history(self, channel: str, limit: Optional[int], size: int = 15) -> SlackChannelHistory:
         result = SlackChannelHistory(channel=channel, pages=[])
         pages = 1
 
@@ -160,7 +160,7 @@ class SlackClient(BaseSlackClient):
                 response = self.client.conversations_replies(
                     channel=channel,
                     ts=ts,
-                    limit=200,
+                    limit=15,
                     cursor=cursor,
                     include_all_metadata=True,
                 )
@@ -168,7 +168,7 @@ class SlackClient(BaseSlackClient):
                 response = self.client.conversations_replies(
                     channel=channel,
                     ts=ts,
-                    limit=200,
+                    limit=15,
                     include_all_metadata=True,
                 )
             messages.extend(response["messages"])
@@ -197,7 +197,7 @@ class SlackClient(BaseSlackClient):
 
         else:
             conversations = self.fetch_conversations_history(
-                event.channel, 1, 30)
+                event.channel, 1, 15)
             for message in conversations["pages"][0]["messages"]:
                 if "subtype" in message or message["text"].strip() == "":
                     continue
@@ -322,7 +322,7 @@ class SlackAsyncClient(BaseSlackClient):
         self.client = client or AsyncWebClient(token=config.bot_token)
 
     @backoff.on_exception(backoff.expo, SlackApiError, max_time=600, giveup=slack_api_error_is_not_retryable, logger=LoggerConfig().logger)
-    async def fetch_conversations_history(self, channel: str, limit: Optional[int], size: int = 100) -> SlackChannelHistory:
+    async def fetch_conversations_history(self, channel: str, limit: Optional[int], size: int = 15) -> SlackChannelHistory:
         result = SlackChannelHistory(channel=channel, pages=[])
         pages = 1
 
@@ -402,7 +402,7 @@ class SlackAsyncClient(BaseSlackClient):
                         break
 
         else:
-            conversations = await self.fetch_conversations_history(event.channel, 1, 30)
+            conversations = await self.fetch_conversations_history(event.channel, 1, 15)
             for message in conversations["pages"][0]["messages"]:
                 if "subtype" in message or message["text"].strip() == "":
                     continue
