@@ -25,8 +25,9 @@ def create_markitdown_crawler_tool(config: AgentConfig) -> BaseTool:
         markitdown = MarkItDown(enable_plugins=False,
                                 requests_session=requests_session)
         result = markitdown.convert_url(url)
+        content = result.markdown.strip()
 
-        return result.markdown.strip(), [Artifact(title=result.title, link=url)]
+        return content, [Artifact(title=result.title, link=url, content=content)]
 
     markitdown_crawler.description = config.get_prompt(
         "markitdown_crawler_tool").text

@@ -1,6 +1,7 @@
 import jwt
 import time
 import uuid
+import random
 import datetime
 import streamlit as st
 from langchain.schema.runnable.config import RunnableConfig
@@ -69,10 +70,14 @@ def handle_feedback(index):
 
 
 def simulate_stream(message: str):
+    delay = 0.02
+    if (non_space_chars := sum(1 for c in message if not c.isspace())) > 1000:
+        total_time = random.uniform(10.0, 20.0)
+        delay = total_time / non_space_chars
     for char in message:
         yield char
         if not char.isspace():
-            time.sleep(0.02)
+            time.sleep(delay)
 
 
 if "user" not in st.session_state:
@@ -95,7 +100,7 @@ with col2:
     st.markdown(
         f"`{st.session_state['session_id']}`\n`{st.session_state['user']}`")
 with col3:
-    st.button(get_agent_config().get_message("new_conversation_message"),
+    st.button(get_agent_config().get_message("new_conversation_title"),
               on_click=lambda: st.session_state.clear())
 
 
@@ -141,7 +146,7 @@ if st.session_state["is_thinking"] and st.session_state["messages"][-1]["role"] 
                     "session_id": st.session_state["session_id"],
                 },
                 configurable={
-                    "context": f"- Current time is {datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")}.",
+                    "context": f"- Current time is {datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")} .",
                     "slack_conversation_agent_context": "",
                     "thread_id": st.session_state["session_id"],
                 },

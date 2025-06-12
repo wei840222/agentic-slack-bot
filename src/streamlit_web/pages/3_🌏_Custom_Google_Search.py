@@ -4,7 +4,9 @@ from typing import List
 import streamlit as st
 from langchain.tools import BaseTool
 
-from agent.tool import create_google_search_tool, create_markitdown_crawler_tool, Artifact
+from agent.tool import create_google_search_tool, create_markitdown_crawler_tool
+from agent.tool.types import Artifact
+
 from config import AgentConfig
 
 st.set_page_config(

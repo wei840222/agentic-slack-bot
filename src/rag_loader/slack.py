@@ -11,10 +11,11 @@ from agent.tool import clean_title
 from slack_bot.client import SlackClient
 from slack_bot.types import message_to_text
 
-slack_config = SlackConfig()
+
 rag_config = RagConfig()
-logger = slack_config.get_logger()
-logger.debug("config loaded", slack_config=slack_config, rag_config=rag_config)
+slack_config = SlackConfig()
+logger = rag_config.get_logger()
+logger.debug("config loaded", rag_config=rag_config, slack_config=slack_config)
 
 
 if __name__ == "__main__":

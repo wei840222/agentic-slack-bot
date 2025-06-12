@@ -13,13 +13,8 @@ from slack_bot.client import SlackClient
 from slack_bot.types import message_to_text
 from agent.chain import create_make_title_chain
 from .types import Artifact
-
+from .utils import clean_title
 _slack_client: Optional[SlackClient] = None
-
-
-def clean_title(title: str) -> str:
-    """Clean a title by removing special characters."""
-    return ''.join(filter(lambda x: x not in "|&/<>\"'\\\n", title))
 
 
 def create_get_slack_conversation_replies_tool(config: SlackConfig) -> BaseTool:
@@ -102,7 +97,7 @@ def create_search_slack_conversation_tool(config: SlackConfig) -> BaseTool:
 
         qdrant_client = rag_config.get_qdrant_config().get_qdrant_client()
         results = qdrant_client.query_points(
-            collection_name="slack",
+            collection_name=rag_config.slack_search_collection_name,
             query=rag_config.load_embeddings_model().embed_query(query),
             query_filter=models.Filter(
                 must=[
@@ -120,7 +115,7 @@ def create_search_slack_conversation_tool(config: SlackConfig) -> BaseTool:
         logger.debug(
             "search_slack_conversation qdrant_client.query_points", results=results)
 
-        artifacts = [Artifact(title=point.payload["metadata"]["title"],
+        artifacts = [Artifact(title=clean_title(point.payload["metadata"]["title"]),
                               link=point.payload["metadata"]["source"],
                               content=point.payload["page_content"],
                               metadata={"vector_score": point.score, **{k: v for k, v in point.payload["metadata"].items() if k not in {"title", "source"}}})
@@ -150,8 +145,17 @@ def create_search_slack_conversation_tool(config: SlackConfig) -> BaseTool:
             artifact["metadata"]["rerank_score"] = record.score
             reranked_artifacts.append(artifact)
 
-        content = "\n\n===\n\n".join([artifact["content"]
-                                     for artifact in reranked_artifacts])
+        content = "\n===\n".join([f"""
+<title>
+{artifact["title"]}
+</title>
+<link>
+{artifact["link"]}
+</link>
+<content>
+{artifact["content"]}
+</content>
+""" for artifact in reranked_artifacts])
 
         return content, reranked_artifacts
 

@@ -7,20 +7,20 @@ case "$@" in
         python -m slack_bot
     ;;
 
-    "mcp-server")
-        python -m mcp_server
-    ;;
-
-    "web")
-        streamlit run --theme.base dark --browser.gatherUsageStats false ./src/streamlit_web/👋_Hello.py
-    ;;
-
     "rag-slack-loader")
         python -m rag_loader.slack
     ;;
 
-   *)
+    "mcp-server")
+        python -m mcp_server
+    ;;
+
+    "streamlit-web")
+        streamlit run --browser.gatherUsageStats false ./src/streamlit_web/👋_Hello.py
+    ;;
+
+    *)
         echo "not support command: $@"
-        echo "available commands: slack-bot, mcp-server, web, rag-slack-loader"
-   ;;
+        echo "available commands: slack-bot, rag-slack-loader, mcp-server, streamlit-web"
+    ;;
 esac

@@ -55,11 +55,6 @@ class AgentConfig(BaseSettings, LoggerMixin, ModelMixin, PromptMixin, EmojiMixin
         description="Whether to use the async MongoDB checkpointer."
     )
 
-    checkpointer_max_tokens: int = Field(
-        default=65536*4,
-        description="The maximum number of tokens to use for the agent's checkpointer aka the number of tokens to keep in the memory."
-    )
-
     tracking_provider: TrackingProvider = Field(
         default=TrackingProvider.NONE,
         description="The provider to use for tracking the agent's interactions."
@@ -82,11 +77,17 @@ class AgentConfig(BaseSettings, LoggerMixin, ModelMixin, PromptMixin, EmojiMixin
                     _checkpointer = MemorySaver()
                 case CheckpointerProvider.MONGODB:
                     if async_mongodb:
-                        _checkpointer = AsyncMongoDBSaver(
-                            AsyncMongoClient(self.checkpointer_mongodb_uri))
+                        client = AsyncMongoClient(
+                            self.checkpointer_mongodb_uri,
+                            uuidRepresentation="standard"
+                        )
+                        _checkpointer = AsyncMongoDBSaver(client)
                     else:
-                        _checkpointer = MongoDBSaver(
-                            MongoClient(self.checkpointer_mongodb_uri))
+                        client = MongoClient(
+                            self.checkpointer_mongodb_uri,
+                            uuidRepresentation="standard"
+                        )
+                        _checkpointer = MongoDBSaver(client)
                 case _:
                     raise ValueError(
                         f"Invalid checkpointer provider: {self.checkpointer_provider}")

@@ -11,8 +11,9 @@ SLACK_WORKSPACE_URL=https://xxxxxworkspacegroup.slack.com
 SLACK_ASSISTANT=true
 PROMPT_PROVIDER=langsmith
 AGENT_CHECKPOINTER_PROVIDER=mongodb
-AGENT_CHECKPOINTER_MONGODB_URI=mongodb+srv://agentic-slack-bot:OSObpkkaF80GgR9D@agent-memory.8flud3o.mongodb.net/?retryWrites=true&w=majority&appName=agent-memory
+AGENT_CHECKPOINTER_MONGODB_URI=mongodb://xxx:xxx@localhost:27017
 AGENT_TRACKING_PROVIDER=langsmith
+RAG_MODEL=google_vertexai/gemini-2.0-flash
 LANGSMITH_PROJECT=xxxxxx
 LANGSMITH_API_KEY=lsv2_xxxxxxxxx
 GOOGLE_API_KEY=xxxxxxxx
@@ -23,8 +24,7 @@ QDRANT_API_KEY=xxxxxxxxxx
 
 How to run local ?
 
-```
-./run.sh web
-./run.sh slack-bot
-./run.sh mcp-server
-```
+1. `./run.sh slack-bot` to run slack bot
+2. `./run.sh rag-slack-loader` to load data from slack to qdrant
+3. `./run.sh mcp-server` run mcp server
+4. `./run.sh streamlit-web` to run demo website

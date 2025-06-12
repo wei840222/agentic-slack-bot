@@ -4,7 +4,8 @@ from typing import List, Optional
 import streamlit as st
 from langchain.tools import BaseTool
 
-from agent.tool import create_search_slack_conversation_tool, Artifact
+from agent.tool import create_search_slack_conversation_tool
+from agent.tool.types import Artifact
 from config import SlackConfig, RagConfig
 
 st.set_page_config(
@@ -12,6 +13,7 @@ st.set_page_config(
     page_icon="🔍",
     layout="wide",
 )
+
 
 @st.cache_resource
 def get_rag_config() -> RagConfig:
@@ -51,6 +53,8 @@ st.title("Slack Search 🔍")
 st.sidebar.header("Document")
 st.sidebar.markdown(
     "[Qdrant Similarity search](https://qdrant.tech/documentation/concepts/search)")
+st.sidebar.markdown(
+    "[Improve search and RAG quality with ranking API](https://cloud.google.com/generative-ai-app-builder/docs/ranking)")
 
 
 col1, col2, col3 = st.columns(3)
@@ -60,7 +64,7 @@ with col1:
 with col2:
     CHANNELS = get_rag_config().slack_search_channels
     channel_names = st.multiselect(
-        "Select the channel IDs to search in. If no channel IDs are selected, all channels will be searched.",
+        "Select channels to search. Leave empty to search all.",
         [channel["name"] for channel in CHANNELS],
         default=[channel["name"] for channel in CHANNELS],
     )

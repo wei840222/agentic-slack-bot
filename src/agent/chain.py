@@ -9,7 +9,7 @@ from config import AgentConfig, RagConfig
 def create_check_new_conversation_chain(config: Union[AgentConfig, RagConfig]) -> Runnable:
     "prompt_name: check_new_conversation"
 
-    model = config.load_chat_model(thinking_budget=0)
+    model = config.load_chat_model()
     prompt = ChatPromptTemplate.from_messages([
         HumanMessagePromptTemplate.from_template(
             config.get_prompt("check_new_conversation").text),
@@ -23,7 +23,7 @@ def create_check_new_conversation_chain(config: Union[AgentConfig, RagConfig]) -
 def create_make_title_chain(config: Union[AgentConfig, RagConfig]) -> Runnable:
     "prompt_name: make_title"
 
-    model = config.load_chat_model(thinking_budget=0)
+    model = config.load_chat_model()
     prompt = ChatPromptTemplate.from_messages([
         HumanMessagePromptTemplate.from_template(
             config.get_prompt("make_title").text),

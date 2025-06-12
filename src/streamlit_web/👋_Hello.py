@@ -16,3 +16,18 @@ st.markdown(
     **👈 Select a demo from the sidebar** to explore our available features.
 """
 )
+
+st.header("Developer Tools")
+st.html(
+    """
+    <a href="https://modelcontextprotocol.io">
+        <img src="https://microsoft.github.io/genaiscript/_astro/mcp.CBnQ_GM8_1eWG7e.webp" height="30" alt="MCP Logo">
+    </a>
+    """
+)
+st.markdown(
+    """
+    **[MCP Server](./MCP_Server)**  
+    Model Context Protocol (MCP) Server provides a standardized way to expose AI tools and services through Streamable HTTP transport. It offers emoji analysis, web scraping, search capabilities and Slack integration for enhanced AI development workflows.
+"""
+)

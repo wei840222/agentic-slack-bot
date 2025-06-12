@@ -17,7 +17,7 @@ messages:
   - name: content_disclaimer_message
     text: 🤔 AI 可能會發生錯誤，請查核重要資訊。
   - name: new_conversation_title
-    text: 開啟新的對話
+    text: 新對話
   - name: new_conversation_message
     text: 💡 開啟新的對話
   - name: tool_artifact_title
@@ -32,42 +32,42 @@ messages:
   - name: assistant_greeting
     text: 今天過的好嗎?
 
-  - name: assistant_greeting_prompt_0_title
+  - name: assistant_greeting_prompt_00_title
     text: 打招呼
-  - name: assistant_greeting_prompt_0_icon
+  - name: assistant_greeting_prompt_00_icon
     text: 🤗
-  - name: assistant_greeting_prompt_0_message
+  - name: assistant_greeting_prompt_00_message
     text: 我今天過得很好，現在幾點?
 
-  - name: assistant_greeting_prompt_1_title
+  - name: assistant_greeting_prompt_01_title
     text: 找餐廳
-  - name: assistant_greeting_prompt_1_icon
+  - name: assistant_greeting_prompt_01_icon
     text: 🍴
-  - name: assistant_greeting_prompt_1_message
+  - name: assistant_greeting_prompt_01_message
     text: 幫我找台北市好吃的燒烤餐廳，1000元以內。
 
-  - name: assistant_greeting_prompt_2_title
+  - name: assistant_greeting_prompt_02_title
     text: 解數學問題
-  - name: assistant_greeting_prompt_2_icon
+  - name: assistant_greeting_prompt_02_icon
     text: 📚
-  - name: assistant_greeting_prompt_2_message
+  - name: assistant_greeting_prompt_02_message
     text: |
       請幫我解這個微積分問題：求函數 f(x) = x^2 * sin(x) 在區間 [0, π] 上的定積分。
       並且提供詳細的解題過程。
       如果你不知道怎麼解，請上網搜尋。
 
-  - name: assistant_greeting_prompt_3_title
+  - name: assistant_greeting_prompt_03_title
     text: 開發演算法
-  - name: assistant_greeting_prompt_3_icon
+  - name: assistant_greeting_prompt_03_icon
     text: 💻
-  - name: assistant_greeting_prompt_3_message
+  - name: assistant_greeting_prompt_03_message
     text: 提供給我 Python 快速排序程式碼範例。
 
-  - name: assistant_greeting_prompt_4_title
+  - name: assistant_greeting_prompt_04_title
     text: 分析天氣趨勢
-  - name: assistant_greeting_prompt_4_icon
+  - name: assistant_greeting_prompt_04_icon
     text: 🌤️
-  - name: assistant_greeting_prompt_4_message
+  - name: assistant_greeting_prompt_04_message
     text: |
       搜尋 "今天台北天氣"
       並從搜尋結果中來自 "accuweather.com" 網站的連結裡
@@ -75,11 +75,11 @@ messages:
       最後抓取 "每天" 連結網頁內容
       並提供未來一周台北天氣的摘要
 
-  - name: assistant_greeting_prompt_5_title
+  - name: assistant_greeting_prompt_05_title
     text: 個股比較
-  - name: assistant_greeting_prompt_5_icon
+  - name: assistant_greeting_prompt_05_icon
     text: 📈
-  - name: assistant_greeting_prompt_5_message
+  - name: assistant_greeting_prompt_05_message
     text: |
       搜尋並比較 "台積電 2330" 和 "聯發科 2454" 的：
       1. 最近一季的財務表現
@@ -88,11 +88,28 @@ messages:
       4. 市場評價
       最後提供一個以上資訊的摘要
 
-  - name: assistant_greeting_prompt_6_title
+  - name: assistant_greeting_prompt_10_title
     text: 解釋 Slack 訊息
-  - name: assistant_greeting_prompt_6_icon
+  - name: assistant_greeting_prompt_10_icon
     text: 💬
-  - name: assistant_greeting_prompt_6_message
+  - name: assistant_greeting_prompt_10_message
     text: |
       https://wei840222-home-infra.slack.com/archives/C08VB4JEELX/p1749635140000399
       這寫甚麼?
+  - name: assistant_greeting_prompt_11_title
+    text: Slack 頻道洞察
+  - name: assistant_greeting_prompt_11_icon
+    text: 💬
+  - name: assistant_greeting_prompt_11_message
+    text: |
+      https://wei840222-home-infra.slack.com/archives/C090F9D535M
+      統整這頻道最近20則訊息
+      並提供摘要，基於分類、個數以及發生時間
+  - name: assistant_greeting_prompt_12_title
+    text: Slack 訊息查找
+  - name: assistant_greeting_prompt_12_icon
+    text: 🔍
+  - name: assistant_greeting_prompt_12_message
+    text: |
+      https://wei840222-home-infra.slack.com/archives/C08VB4JEELX
+      館長發生什麼事?

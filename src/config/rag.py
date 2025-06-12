@@ -66,7 +66,7 @@ class RagConfig(YamlBaseSettings, LoggerMixin, ModelMixin, PromptMixin):
         description="The overlap of the chunk to use for the RAG."
     )
     batch_size: int = Field(
-        default=10,
+        default=1,
         description="The number of documents to batch for the RAG."
     )
 
