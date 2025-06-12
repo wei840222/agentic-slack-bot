@@ -135,7 +135,7 @@ class SlackBot:
         await ack()
 
     async def _process_message_event(self, event: SlackEvent) -> None:
-        event.session_id = await self.client.find_session_id(
+        event.session_id = self.client.find_session_id(
             event, in_replies=self.config.assistant)
 
         runnable_config = await self.create_runnable_config(event, fetch_conversations_replies=False)
@@ -184,7 +184,7 @@ class SlackBot:
         await self.client.reply_markdown(event, content, references, in_replies=self.config.assistant)
 
     async def _process_app_mention_event(self, event: SlackEvent) -> None:
-        event.session_id = await self.client.find_session_id(
+        event.session_id = self.client.find_session_id(
             event, in_replies=True)
 
         runnable_config = await self.create_runnable_config(event)

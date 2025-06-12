@@ -73,6 +73,27 @@ class BaseSlackClient:
             return match.group(1), int(match.group(2)) / 1000000
         raise ValueError(f"Invalid Slack Thread URL: {url}")
 
+    @staticmethod
+    def find_session_id(event: SlackEvent, in_replies: bool = False) -> str:
+        if in_replies:
+            thread_ts = event.data["thread_ts"] if "thread_ts" in event.data else event.data["ts"]
+            session_key = f"{event.channel}-{thread_ts}"
+        else:
+            session_key = event.channel
+
+        try:
+            with open(f"./output/{session_key}", "r", encoding="utf-8") as f:
+                session_id = f.read().strip()
+        except FileNotFoundError:
+            session_id = ""
+
+        if session_id == "":
+            session_id: str = event.data["client_msg_id"]
+            with open(f"./output/{session_key}", "w", encoding="utf-8") as f:
+                f.write(session_id)
+
+        return session_id
+
     def replace_channel_id_with_url(self, text: str) -> str:
         return re.sub(r"<#([A-Z0-9]+)\|>",
                       f" {self.config.workspace_url}/archives/\\1 ", text)
@@ -182,39 +203,6 @@ class SlackClient(BaseSlackClient):
         if limit is not None:
             return messages[:limit]
         return messages
-
-    def find_session_id(self, event: SlackEvent, in_replies: bool = False) -> str:
-        session_id = ""
-
-        if in_replies and "thread_ts" in event.data:
-            replies = self.fetch_conversations_replies(
-                event.channel, event.data["thread_ts"])
-            if len(replies) > 0:
-                for reply in replies:
-                    if "client_msg_id" in reply:
-                        session_id = reply["client_msg_id"]
-                        break
-
-        else:
-            conversations = self.fetch_conversations_history(
-                event.channel, 1, 15)
-            for message in conversations["pages"][0]["messages"]:
-                if "subtype" in message or message["text"].strip() == "":
-                    continue
-
-                try:
-                    current_session_id = message["metadata"]["event_payload"]["reply_session_id"]
-                    if session_id == "":
-                        session_id = current_session_id
-                    elif session_id != current_session_id:
-                        break
-                except:
-                    pass
-
-        if session_id == "":
-            session_id = event.data["client_msg_id"]
-
-        return session_id
 
     def add_reaction(self, event: SlackEvent, reaction: str) -> None:
         response = self.client.reactions_add(
@@ -389,37 +377,6 @@ class SlackAsyncClient(BaseSlackClient):
         if limit is not None:
             return messages[:limit]
         return messages
-
-    async def find_session_id(self, event: SlackEvent, in_replies: bool = False) -> str:
-        session_id = ""
-
-        if in_replies and "thread_ts" in event.data:
-            replies = await self.fetch_conversations_replies(event.channel, event.data["thread_ts"])
-            if len(replies) > 0:
-                for reply in replies:
-                    if "client_msg_id" in reply:
-                        session_id = reply["client_msg_id"]
-                        break
-
-        else:
-            conversations = await self.fetch_conversations_history(event.channel, 1, 15)
-            for message in conversations["pages"][0]["messages"]:
-                if "subtype" in message or message["text"].strip() == "":
-                    continue
-
-                try:
-                    current_session_id = message["metadata"]["event_payload"]["reply_session_id"]
-                    if session_id == "":
-                        session_id = current_session_id
-                    elif session_id != current_session_id:
-                        break
-                except:
-                    pass
-
-        if session_id == "":
-            session_id = event.data["client_msg_id"]
-
-        return session_id
 
     async def add_reaction(self, event: SlackEvent, reaction: str) -> None:
         response = await self.client.reactions_add(
