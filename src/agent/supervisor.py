@@ -17,7 +17,7 @@ def create_supervisor_graph(agent_config: AgentConfig, slack_config: SlackConfig
     https://github.com/langfuse/langfuse/issues/5035
     """
 
-    model = agent_config.load_chat_model()
+    model = agent_config.load_chat_model(thinking_budget=0)
     web_research_agent = create_web_research_agent(agent_config)
     slack_conversation_agent = create_slack_conversation_agent(
         agent_config, slack_config)

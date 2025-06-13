@@ -12,7 +12,7 @@ from .tool import create_google_search_tool, create_markitdown_crawler_tool, cre
 def create_web_research_agent(agent_config: AgentConfig) -> Runnable:
     "prompt_name: web_research_agent_system_prompt"
 
-    model = agent_config.load_chat_model()
+    model = agent_config.load_chat_model(thinking_budget=0)
     tools = [create_google_search_tool(
         agent_config), create_markitdown_crawler_tool(agent_config)]
 
@@ -32,7 +32,7 @@ def create_web_research_agent(agent_config: AgentConfig) -> Runnable:
 def create_slack_conversation_agent(agent_config: AgentConfig, slack_config: SlackConfig) -> Runnable:
     "prompt_name: slack_conversation_agent_system_prompt"
 
-    model = agent_config.load_chat_model()
+    model = agent_config.load_chat_model(thinking_budget=0)
     tools = [create_get_slack_conversation_replies_tool(
         slack_config), create_get_slack_conversation_history_tool(slack_config), create_search_slack_conversation_tool(slack_config)]
 
