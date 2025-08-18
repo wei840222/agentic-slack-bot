@@ -96,7 +96,7 @@ class BaseSlackClient:
 
     def replace_channel_id_with_url(self, text: str) -> str:
         return re.sub(r"<#([A-Z0-9]+)\|>",
-                      f" {self.config.workspace_url}/archives/\\1 ", text)
+                      f"<{self.config.workspace_url}/archives/\\1>", text)
 
     def build_channel_url(self, channel_id: str) -> str:
         """

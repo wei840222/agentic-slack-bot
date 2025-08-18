@@ -228,8 +228,8 @@ class SlackBot:
 - Your name is <@{self.config.bot_id}> .
 - User <@{event.user}> is asking you question.
 - Current slack channel id is <#{event.channel}|> .
-- Current slack channel url is {self.client.build_channel_url(event.channel)} .
-- Current slack conversation url is {self.client.build_thread_url(event.channel, event.data["ts"], event.data["thread_ts"] if "thread_ts" in event.data else None)} .
+- Current slack channel url is <{self.client.build_channel_url(event.channel)}>.
+- Current slack conversation url is <{self.client.build_thread_url(event.channel, event.data["ts"], event.data["thread_ts"] if "thread_ts" in event.data else None)}>.
 - Current time is {datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")} .
 """
 
@@ -246,8 +246,8 @@ class SlackBot:
 
         slack_conversation_agent_context = f"""
 - Current slack channel id is <#{event.channel}|> .
-- Current slack channel url is {self.client.build_channel_url(event.channel)} .
-- Current slack conversation url is {self.client.build_thread_url(event.channel, event.data["ts"], event.data["thread_ts"] if "thread_ts" in event.data else None)} .
+- Current slack channel url is <{self.client.build_channel_url(event.channel)}>.
+- Current slack conversation url is <{self.client.build_thread_url(event.channel, event.data["ts"], event.data["thread_ts"] if "thread_ts" in event.data else None)}>.
 """
 
         return RunnableConfig(
