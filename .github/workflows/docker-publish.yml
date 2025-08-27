@@ -132,7 +132,7 @@ jobs:
       - name: Update image tag
         working-directory: manifests
         run: |
-          cd kubernetes/apps-autosync/bot-farm
+          cd kubernetes/apps-autosync/bot-farm/agentic-slack-bot
           kustomize edit set image ghcr.io/wei840222/agentic-slack-bot:${{ github.ref_name }}
           git add .
           git commit -m "Update agentic-slack-bot image to ${{ github.ref_name }}"
