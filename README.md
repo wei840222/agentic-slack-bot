@@ -1,5 +1,7 @@
 # agentic-slack-bot
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/wei840222/agentic-slack-bot)
+
 You need to prepare .env file like following to run the bot.
 
 ```
